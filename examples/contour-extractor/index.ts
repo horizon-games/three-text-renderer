@@ -1,6 +1,8 @@
 //import fn from "../src/index";
 import * as opentype from 'opentype.js'
-import font from './fonts/Barlow-Bold.ttf'
+
+// @ts-ignore
+import font from '../fonts/Barlow-Bold.ttf'
 
 const canvas = document.createElement('canvas')
 const context = canvas.getContext('2d')
