@@ -1,0 +1,21 @@
+{
+  "name": "three-text-renderer",
+  "version": "0.1.0",
+  "description": "Three js realtime msdf text rendering pipeline that utilizes harfbuzz for text shaping.",
+  "main": "index.js",
+  "repository": "git@github.com:horizon-games/three-text-renderer.git",
+  "author": "Tomaz Dyzinski, Corban Riley",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "dev": "parcel examples/index.html",
+    "build": "parcel build examples/index.html"
+  },
+  "devDependencies": {
+    "parcel-bundler": "^1.12.3",
+    "typescript": "^3.6.3"
+  },
+  "dependencies": {
+    "opentype.js": "^1.1.0"
+  }
+}
