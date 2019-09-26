@@ -21,7 +21,7 @@ async function main() {
 
   textRenderer.createTextGeometry(testString, { fontFace: 'Barlow-Bold' })
 
-  const font = await textRenderer.fonts.get('Barlow-Bold').use()
+  const { font } = await textRenderer.fonts.get('Barlow-Bold').use()
 
   var path = font.getPath(testString, 0, 150, 72)
 

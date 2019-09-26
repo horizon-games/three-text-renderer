@@ -4,6 +4,7 @@ class Font {
   key: string
   path: string
 
+  private _blob: ArrayBuffer | undefined
   private _font: opentype.Font | undefined
   private _loader: Promise<opentype.Font> | undefined
 
@@ -14,7 +15,9 @@ class Font {
 
   async load() {
     try {
-      this._font = await new Promise((resolve, reject) => {
+      this._font = await new Promise(async (resolve, reject) => {
+        this._blob = await fetch(this.path).then(x => x.arrayBuffer())
+
         opentype.load(this.path, (err, font) => {
           if (err) {
             reject('Font could not be loaded: ' + err)
@@ -35,9 +38,9 @@ class Font {
       this._loader = this.load()
     }
 
-    const font = await this._loader
+    await this._loader
 
-    return font
+    return { blob: this._blob!, font: this._font! }
   }
 }
 

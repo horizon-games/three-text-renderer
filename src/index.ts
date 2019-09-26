@@ -32,13 +32,13 @@ class TextRenderer {
       )
     }
 
-    const utf8Encoder = new TextEncoder()
-    const myFont = this.fonts.get(options.fontFace)!
-    const fontBlob = await fetch(myFont.path).then(x => x.arrayBuffer())
+    const font = this.fonts.get(options.fontFace)!
 
-    const result = getTextShaping(text, fontBlob)
+    const { blob } = await font.use()
 
-    console.log(result)
+    const shapingData = getTextShaping(text, blob)
+
+    console.log(shapingData)
   }
 }
 
