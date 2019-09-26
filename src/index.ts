@@ -1,21 +1,35 @@
-import * as opentype from 'opentype.js'
+import { Font, load } from 'opentype.js'
 
-interface TextRendererOptions {
-  test: boolean
-}
+interface TextRendererOptions {}
 
-export default class TextRenderer {
-  options: TextRendererOptions = {
-    test: true
-  }
+class TextRenderer {
+  font: Font | undefined
+  options: TextRendererOptions = {}
 
-  constructor(options: Partial<TextRendererOptions> = {}) {
+  ready: Promise<any>
+  private _readyResolver: any
+
+  constructor(fontPath: string, options: Partial<TextRendererOptions> = {}) {
     Object.assign(this.options, options)
 
-    console.log(opentype)
+    this.ready = new Promise(resolve => {
+      this._readyResolver = resolve
+    })
+
+    this.loadFont(fontPath)
   }
 
-  test(): string {
-    return 'hey'
+  async loadFont(fontPath: string) {
+    load(fontPath, (err, font) => {
+      if (err) {
+        throw new Error('Font could not be loaded: ' + err)
+      } else {
+        this.font = font
+
+        this._readyResolver()
+      }
+    })
   }
 }
+
+export default TextRenderer

@@ -20,5 +20,8 @@
   "dependencies": {
     "opentype.js": "^1.1.0",
     "three": "^0.108.0"
-  }
+  },
+  "browserslist": [
+    "last 1 Chrome versions"
+  ]
 }
