@@ -1,3 +1,17 @@
+// declare const enum HB_MEMORY_MODE {
+//   HB_MEMORY_MODE_DUPLICATE,
+//   HB_MEMORY_MODE_READONLY,
+//   HB_MEMORY_MODE_WRITABLE,
+//   HB_MEMORY_MODE_READONLY_MAY_MAKE_WRITABLE
+// }
+
+// declare const enum RAQM_DIRECTION {
+//   RAQM_DIRECTION_DEFAULT,
+//   RAQM_DIRECTION_RTL,
+//   RAQM_DIRECTION_LTR,
+//   RAQM_DIRECTION_TTB
+// }
+
 declare module '*raqm.wasm' {
   type Ptr = number
   type FacePtr = Ptr
@@ -8,20 +22,6 @@ declare module '*raqm.wasm' {
   type RqPtr = Ptr
   type RqGlyphPtr = Ptr
 
-  enum HB_MEMORY_MODE {
-    HB_MEMORY_MODE_DUPLICATE,
-    HB_MEMORY_MODE_READONLY,
-    HB_MEMORY_MODE_WRITABLE,
-    HB_MEMORY_MODE_READONLY_MAY_MAKE_WRITABLE
-  }
-
-  enum RAQM_DIRECTION {
-    RAQM_DIRECTION_DEFAULT,
-    RAQM_DIRECTION_RTL,
-    RAQM_DIRECTION_LTR,
-    RAQM_DIRECTION_TTB
-  }
-
   interface Raqm {
     memory: WebAssembly.Memory
     free: (ptr: number) => void
@@ -29,7 +29,7 @@ declare module '*raqm.wasm' {
     hb_blob_create: (
       data_ptr: Ptr,
       length: number,
-      mode: HB_MEMORY_MODE,
+      mode: number /* HB_MEMORY_MODE */,
       user_data_ptr: Ptr,
       hb_destroy_func: number
     ) => BlobPtr
@@ -75,7 +75,10 @@ declare module '*raqm.wasm' {
       start: number,
       len: number
     ) => boolean
-    raqm_set_par_direction: (rq: RqPtr, dir: RAQM_DIRECTION) => boolean
+    raqm_set_par_direction: (
+      rq: RqPtr,
+      dir: number /* RAQM_DIRECTION */
+    ) => boolean
     raqm_set_text: (rq: RqPtr, text: I32Ptr, len: number) => void
     raqm_set_text_utf8: (rq: RqPtr, text: CharPtr, len: number) => boolean
     __data_end: WebAssembly.Global

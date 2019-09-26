@@ -17,7 +17,7 @@ async function main() {
 
   textRenderer.addFont('Barlow-Bold', fontPath)
 
-  const testString = 'aaabccc'
+  const testString = 'This is a test of the emergency broadcast system'
 
   textRenderer.createTextGeometry(testString, { fontFace: 'Barlow-Bold' })
 
@@ -25,7 +25,6 @@ async function main() {
 
   var path = font.getPath(testString, 0, 150, 72)
 
-  // If you just want to draw the text you can also use font.draw(ctx, text, x, y, fontSize).
   path.draw(context)
 }
 
