@@ -66,7 +66,7 @@ declare module '*raqm.wasm' {
       rq: RqPtr,
       font: FontPtr,
       start: number,
-      end: number
+      len: number
     ) => void
     raqm_set_invisible_glyph: (rq: RqPtr, gid: number) => boolean
     raqm_set_language: (
