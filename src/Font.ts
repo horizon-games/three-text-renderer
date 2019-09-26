@@ -30,6 +30,8 @@ class Font {
       throw new Error(err)
     }
 
+    console.log(this._font!.glyphs)
+
     return this._font as opentype.Font
   }
 

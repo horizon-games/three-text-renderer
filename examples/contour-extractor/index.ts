@@ -1,7 +1,9 @@
 import TextRenderer from '../../src/index'
 
 // @ts-ignore
-import fontPath from '../fonts/Barlow-Bold.ttf'
+//import fontPath from '../fonts/Barlow-Bold.ttf'
+import fontPath from '../fonts/FiraCode-Bold.otf'
+import * as opentype from 'opentype.js'
 
 const canvas = document.createElement('canvas')
 const context = canvas.getContext('2d')
@@ -17,15 +19,20 @@ async function main() {
 
   textRenderer.addFont('Barlow-Bold', fontPath)
 
-  const testString = 'This is a test of the emergency broadcast system'
+  const testString = 'This != tést!'
 
-  textRenderer.createTextGeometry(testString, { fontFace: 'Barlow-Bold' })
+  const paths = await textRenderer.getTextContours(testString, {
+    fontFace: 'Barlow-Bold'
+  })
 
-  const { font } = await textRenderer.fonts.get('Barlow-Bold').use()
+  console.log('paths', paths)
 
-  var path = font.getPath(testString, 0, 150, 72)
+  const fullPath = paths.reduce<opentype.Path>((acc, path) => {
+    acc.extend(path)
+    return acc
+  }, new opentype.Path())
 
-  path.draw(context)
+  fullPath.draw(context)
 }
 
 main()

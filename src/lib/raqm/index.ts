@@ -50,12 +50,12 @@ const getTextShaping = (text: string, fontBlob: ArrayBuffer) => {
   const rq = raqm.raqm_create()
   const encodedText = utf8Encoder.encode(text)
   const encodedText_ptr = raqm.malloc(encodedText.byteLength)
-
+  console.log('encoded', encodedText)
   heapu8.set(encodedText, encodedText_ptr)
   raqm.raqm_set_text_utf8(rq, encodedText_ptr, encodedText.byteLength)
   raqm.free(encodedText_ptr)
 
-  raqm.raqm_set_harfbuzz_font_range(rq, font, 0, text.length)
+  raqm.raqm_set_harfbuzz_font_range(rq, font, 0, encodedText.length)
   //raqm.raqm_set_harfbuzz_font_range(rq, font2, 1, 5)
   //raqm.raqm_set_harfbuzz_font_range(rq, font3, 6, 1)
   raqm.hb_font_destroy(font) // rq will hold a reference to font
