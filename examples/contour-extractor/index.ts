@@ -15,11 +15,15 @@ async function main() {
   const textRenderer = new TextRenderer(fontPath)
   console.log(textRenderer)
 
-  await textRenderer.ready
+  textRenderer.addFont('Barlow-Bold', fontPath)
 
-  const { font } = textRenderer
+  const testString = 'aaabccc'
 
-  var path = font.getPath('Hello111, World!', 0, 150, 72)
+  textRenderer.createTextGeometry(testString, { fontFace: 'Barlow-Bold' })
+
+  const font = await textRenderer.fonts.get('Barlow-Bold').use()
+
+  var path = font.getPath(testString, 0, 150, 72)
 
   // If you just want to draw the text you can also use font.draw(ctx, text, x, y, fontSize).
   path.draw(context)

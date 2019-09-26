@@ -13,119 +13,22 @@ import {
 //import createGeometry from 'three-bmfont-text'
 import fragmentShader from './frag.glsl'
 import vertexShader from './vert.glsl'
+import {
+  TextSegment,
+  Gradient,
+  reduceTextSegments,
+  toGradient,
+  toColor,
+  toVertexColors
+} from '../TextSegment'
+import { TextOptions } from '../TextOptions'
+import TextRenderer from '..'
 
 const PPI = 72
 const INCHES_PER_METER = 1 / 0.0254
 const PPM = PPI * INCHES_PER_METER
 const DEFAULT_FONT_WEIGHT = 1.0
 const DEFAULT_ITALIC_SKEW = 0.0
-
-class FontFace {
-  font: any
-  msdfTexture: any
-}
-
-export interface TextOptions {
-  layer: number
-  fontFace: FontFace
-  size: number
-  align: 'left' | 'center' | 'right'
-  vAlign: 'top' | 'center' | 'bottom'
-  width?: number
-  lineHeight?: number
-  letterSpacing: number
-  color: Color | Gradient | string | number
-  strokeWidth: number
-  strokeBias: number
-  strokeColor: Color | string | number
-  alphaTest: number
-  scaleDownToPhysicalSize: boolean
-  shadow: boolean
-  screenSpace: boolean
-  constantSizeOnScreen?: boolean
-  offset?: Vector2
-  bakedOffset?: Vector2
-  prescale?: number
-  contrastMultiplier: number
-}
-
-export interface TextSegment {
-  text: string
-  color: Color | Gradient | string | number
-  fontWeight?: number
-  italicSkew?: number
-  xOffset?: number
-  yOffset?: number
-}
-
-interface GradientOptions {
-  topLeft?: Color | string | number
-  topRight?: Color | string | number
-  bottomLeft?: Color | string | number
-  bottomRight?: Color | string | number
-  top?: Color | string | number
-  bottom?: Color | string | number
-  left?: Color | string | number
-  right?: Color | string | number
-}
-
-export class Gradient {
-  topLeft: Color
-  topRight: Color
-  bottomLeft: Color
-  bottomRight: Color
-
-  constructor(options: GradientOptions) {
-    Object.keys(options).forEach(key => {
-      const k = key as keyof GradientOptions
-      const option = options[k]
-      if (option) {
-        const color = toColor(option)
-        this[k] = color
-      }
-    })
-
-    this.topLeft = options.topLeft
-      ? toColor(options.topLeft)
-      : new Color(0, 0, 0)
-    this.topRight = options.topRight
-      ? toColor(options.topRight)
-      : new Color(0, 0, 0)
-    this.bottomLeft = options.bottomLeft
-      ? toColor(options.bottomLeft)
-      : new Color(0, 0, 0)
-    this.bottomRight = options.bottomRight
-      ? toColor(options.bottomRight)
-      : new Color(0, 0, 0)
-  }
-
-  set top(value: Color | number | string) {
-    this.topLeft = toColor(value)
-    this.topRight = toColor(value)
-  }
-
-  set bottom(value: Color | number | string) {
-    this.bottomLeft = toColor(value)
-    this.bottomRight = toColor(value)
-  }
-
-  set left(value: Color | number | string) {
-    this.topLeft = toColor(value)
-    this.bottomLeft = toColor(value)
-  }
-
-  set right(value: Color | number | string) {
-    this.topRight = toColor(value)
-    this.bottomRight = toColor(value)
-  }
-}
-
-export const reduceTextSegments = (text: string | TextSegment[]) =>
-  Array.isArray(text)
-    ? text.reduce((acc, segment) => {
-        return acc.concat(segment.text)
-      }, '')
-    : String(text)
 
 const createGeometry = (_: any = {}): any => {
   return {}
@@ -149,13 +52,17 @@ export default class TextMesh extends Mesh {
 
   constructor(
     text: string | TextSegment[] = '',
+    textRenderer: TextRenderer,
     options: TextOptions,
     livePropObject?: any,
     livePropName?: string,
     onMeasurementsUpdated?: (mesh: TextMesh) => void,
     optimizeRenderOrder: boolean = true
   ) {
-    super(tryCreateTextGeometry(text, options), initMaterial(options))
+    super(
+      tryCreateTextGeometry(text, textRenderer, options),
+      initMaterial(textRenderer, options)
+    )
 
     this.onMeasurementsUpdated = onMeasurementsUpdated
     this.optimizeRenderOrder = optimizeRenderOrder
@@ -304,9 +211,9 @@ interface MSDFShaderUniforms {
   contrastMultiplier: { value: number }
 }
 
-const initMaterial = (options: TextOptions) => {
+const initMaterial = (textRenderer: TextRenderer, options: TextOptions) => {
   const uniforms: MSDFShaderUniforms = {
-    msdf: new Uniform(options.fontFace.msdfTexture),
+    msdf: new Uniform(textRenderer.texture),
     alphaTest: new Uniform(options.alphaTest),
     strokeWidth: new Uniform(options.strokeWidth),
     strokeBias: new Uniform(options.strokeBias),
@@ -344,11 +251,12 @@ tempBlankGeo.computeBoundingBox()
 
 const tryCreateTextGeometry = (
   text: string | TextSegment[],
+  textRenderer: TextRenderer,
   options: TextOptions,
   overrideColor?: Color | Gradient
 ): BufferGeometry => {
   if (options.fontFace.font && text) {
-    return createTextGeometry(text, options, overrideColor)
+    return createTextGeometry(text, textRenderer, options, overrideColor)
   } else {
     return tempBlankGeo
   }
@@ -356,6 +264,7 @@ const tryCreateTextGeometry = (
 
 const createTextGeometry = (
   text: string | TextSegment[],
+  textRenderer: TextRenderer,
   options: TextOptions,
   overrideColor?: Color | Gradient
 ): BufferGeometry => {
@@ -522,25 +431,6 @@ const createTextGeometry = (
   }
 
   return geometry
-}
-
-const toColor = (value: Color | string | number) =>
-  value instanceof Color ? value : new Color(value)
-
-const toGradient = (value: Color | Gradient | string | number) =>
-  value instanceof Gradient
-    ? value
-    : new Gradient({ top: value, bottom: value })
-
-const toVertexColors = (value: Gradient | Color | number | string) => {
-  value = toGradient(value || 0xffffff)
-
-  return {
-    topLeft: value.topLeft.toArray(),
-    topRight: value.topRight.toArray(),
-    bottomLeft: value.bottomLeft.toArray(),
-    bottomRight: value.bottomRight.toArray()
-  }
 }
 
 const getHorizontalBias = (align: string): number => {
