@@ -9,20 +9,22 @@ import {
   Uniform,
   Vector2
 } from 'three'
+
+import TextRenderer from '..'
+import { TextOptions } from '../TextOptions'
+import {
+  Gradient,
+  reduceTextSegments,
+  TextSegment,
+  toColor,
+  toGradient,
+  toVertexColors
+} from '../TextSegment'
+
 // TODO need to replace create geometry with our own tool
 //import createGeometry from 'three-bmfont-text'
 import fragmentShader from './frag.glsl'
 import vertexShader from './vert.glsl'
-import {
-  TextSegment,
-  Gradient,
-  reduceTextSegments,
-  toGradient,
-  toColor,
-  toVertexColors
-} from '../TextSegment'
-import { TextOptions } from '../TextOptions'
-import TextRenderer from '..'
 
 const PPI = 72
 const INCHES_PER_METER = 1 / 0.0254

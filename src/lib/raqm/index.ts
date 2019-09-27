@@ -20,7 +20,7 @@ const heapu8 = new Uint8Array(raqm.memory.buffer)
 const heapu32 = new Uint32Array(raqm.memory.buffer)
 const heapi32 = new Int32Array(raqm.memory.buffer)
 
-let utf8Encoder = new TextEncoder()
+const utf8Encoder = new TextEncoder()
 
 const getTextShaping = (
   text: string,

@@ -10,12 +10,25 @@
   "private": false,
   "scripts": {
     "dev": "parcel examples/index.html",
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "yarn run lint:tslint && yarn run lint:prettier",
+    "lint:fix": "yarn run lint:fixtslint && yarn run lint:fixprettier",
+    "lint:tslint": "tslint -c tslint.json $(find src -type f -name *.ts -o -name *.tsx)",
+    "lint:prettier": "prettier-check --config ./.prettierrc $(find src -type f -name *.ts -o -name *.tsx)",
+    "lint:fixprettier": "prettier --config ./.prettierrc --write $(find src -type f -name *.ts -o -name *.tsx)",
+    "lint:fixtslint": "tslint -c tslint.json --fix $(find src -type f -name *.ts -o -name *.tsx)"
   },
   "devDependencies": {
     "@types/opentype.js": "^0.7.2",
+    "glslify-bundle": "^5.1.1",
+    "glslify-deps": "^1.3.1",
     "parcel-bundler": "^1.12.3",
-    "typescript": "^3.6.3"
+    "typescript": "^3.6.3",
+    "tslint": "^5.12.0",
+    "prettier": "^1.18.2",
+    "prettier-check": "^2.0.0",
+    "tslint-config-prettier": "^1.17.0",
+    "tslint-lines-between-class-members": "^1.2.4"
   },
   "dependencies": {
     "opentype.js": "^1.1.0",

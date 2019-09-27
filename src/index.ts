@@ -1,8 +1,9 @@
-import Font from './Font'
-import { TextOptions } from './TextOptions'
-import { Texture, BufferGeometry, BufferAttribute } from 'three'
-import { getTextShaping } from './lib/raqm'
 import * as opentype from 'opentype.js'
+import { BufferAttribute, BufferGeometry, Texture } from 'three'
+
+import Font from './Font'
+import { getTextShaping } from './lib/raqm'
+import { TextOptions } from './TextOptions'
 
 interface TextRendererOptions {}
 
