@@ -7,21 +7,28 @@ enum HB_MEMORY_MODE {
   HB_MEMORY_MODE_READONLY_MAY_MAKE_WRITABLE
 }
 
-enum RAQM_DIRECTION {
-  RAQM_DIRECTION_DEFAULT,
-  RAQM_DIRECTION_RTL,
-  RAQM_DIRECTION_LTR,
-  RAQM_DIRECTION_TTB
-}
+// enum RAQM_DIRECTION {
+//   RAQM_DIRECTION_DEFAULT,
+//   RAQM_DIRECTION_RTL,
+//   RAQM_DIRECTION_LTR,
+//   RAQM_DIRECTION_TTB
+// }
 
 raqm.memory.grow(400) // each page is 64kb in size
 
 const heapu8 = new Uint8Array(raqm.memory.buffer)
 const heapu32 = new Uint32Array(raqm.memory.buffer)
+const heapi32 = new Int32Array(raqm.memory.buffer)
 
 let utf8Encoder = new TextEncoder()
 
-const getTextShaping = (text: string, fontBlob: ArrayBuffer) => {
+const getTextShaping = (
+  text: string,
+  fontBlob: ArrayBuffer,
+  lang: string,
+  direction: number
+) => {
+  console.log('text:', text)
   const fontBuffer = raqm.malloc(fontBlob.byteLength)
   heapu8.set(new Uint8Array(fontBlob), fontBuffer)
 
@@ -33,12 +40,16 @@ const getTextShaping = (text: string, fontBlob: ArrayBuffer) => {
     0
   )
 
+  const encodedLang = utf8Encoder.encode(lang)
+  const encodedLang_ptr = raqm.malloc(encodedLang.byteLength)
+  heapu8.set(encodedLang, encodedLang_ptr)
+
   const face = raqm.hb_face_create(blob, 0) // second parameter is ttc index
   raqm.hb_blob_destroy(blob)
 
   const font = raqm.hb_font_create(face)
   raqm.hb_face_destroy(face)
-  raqm.hb_font_set_scale(font, 20 * 64, 20 * 64) // remove this line if you want to have unscaled
+  //raqm.hb_font_set_scale(font, 20 * 72, 20 * 72) // remove this line if you want to have unscaled
 
   // const font2 = raqm.hb_font_create(face)
   // raqm.hb_font_set_scale(font, 40 * 64, 40 * 64)
@@ -50,19 +61,19 @@ const getTextShaping = (text: string, fontBlob: ArrayBuffer) => {
   const rq = raqm.raqm_create()
   const encodedText = utf8Encoder.encode(text)
   const encodedText_ptr = raqm.malloc(encodedText.byteLength)
-  console.log('encoded', encodedText)
+  console.log('encoded text:', encodedText)
   heapu8.set(encodedText, encodedText_ptr)
   raqm.raqm_set_text_utf8(rq, encodedText_ptr, encodedText.byteLength)
   raqm.free(encodedText_ptr)
 
-  raqm.raqm_set_harfbuzz_font_range(rq, font, 0, encodedText.length)
+  raqm.raqm_set_harfbuzz_font_range(rq, font, 0, encodedText.byteLength)
   //raqm.raqm_set_harfbuzz_font_range(rq, font2, 1, 5)
   //raqm.raqm_set_harfbuzz_font_range(rq, font3, 6, 1)
   raqm.hb_font_destroy(font) // rq will hold a reference to font
   //raqm.hb_font_destroy(font2) // rq will hold a reference to font2
   //raqm.hb_font_destroy(font3) // rq will hold a reference to font3
-  raqm.raqm_set_par_direction(rq, RAQM_DIRECTION.RAQM_DIRECTION_LTR)
-  // raqm.raqm_set_language(rq, language, 0, text.byteLength);
+  raqm.raqm_set_par_direction(rq, direction)
+  raqm.raqm_set_language(rq, encodedLang_ptr, 0, encodedText.byteLength)
   raqm.raqm_layout(rq)
 
   const count_ptr = raqm.malloc(4)
@@ -73,13 +84,13 @@ const getTextShaping = (text: string, fontBlob: ArrayBuffer) => {
   const result = []
   for (let i = 0; i < count; ++i) {
     result.push({
-      g: heapu32[glyphs + i * 7 + 0],
-      x_advance: heapu32[glyphs + i * 7 + 1],
-      y_advance: heapu32[glyphs + i * 7 + 2],
-      x_offset: heapu32[glyphs + i * 7 + 3],
-      y_offset: heapu32[glyphs + i * 7 + 4],
+      glyphId: heapu32[glyphs + i * 7 + 0],
+      xAdvance: heapu32[glyphs + i * 7 + 1],
+      yAdvance: heapu32[glyphs + i * 7 + 2],
+      xOffset: heapi32[glyphs + i * 7 + 3],
+      yOffset: heapi32[glyphs + i * 7 + 4],
       cl: heapu32[glyphs + i * 7 + 5],
-      font_index: fonts.indexOf(heapu32[glyphs + i * 7 + 6])
+      fontIndex: fonts.indexOf(heapu32[glyphs + i * 7 + 6])
     })
   }
 

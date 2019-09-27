@@ -34,7 +34,7 @@ class TextRenderer {
     }
   }
 
-  async getTextContours(text: string, options: Partial<TextOptions> = {}) {
+  async getTextContours(text: string, options: TextOptions) {
     if (!options.fontFace || !this.fonts.has(options.fontFace)) {
       throw new Error(
         `TextRenderer: Font face ${options.fontFace} is not added.`
@@ -45,17 +45,32 @@ class TextRenderer {
 
     const { blob, font } = await fontFace.use()
     const { glyphs } = font
-    const shapingData = getTextShaping(text, blob)
+    const shapingData = getTextShaping(
+      text,
+      blob,
+      options.lang,
+      options.direction
+    )
 
-    console.log(shapingData)
+    console.log('shaping:', shapingData)
 
-    const textGlyphs = shapingData.reduce<Array<opentype.Glyph>>((acc, x) => {
-      acc.push(glyphs.get(x.g))
+    interface GlyphShaping {
+      glyph: opentype.Glyph
+      shaping: {
+        glyphId: number
+        xAdvance: number
+        yAdvance: number
+        xOffset: number
+        yOffset: number
+      }
+    }
+
+    const textGlyphs = shapingData.reduce<GlyphShaping[]>((acc, x) => {
+      acc.push({ glyph: glyphs.get(x.glyphId), shaping: x })
       return acc
     }, [])
-    console.log(textGlyphs)
 
-    console.log(textGlyphs.map(x => x.name).join(''))
+    console.log(textGlyphs.map(x => x.glyph.name).join(''))
 
     // // get glyph paths
     // const glyphPaths: opentype.Path[] = []
@@ -69,21 +84,33 @@ class TextRenderer {
     // })
 
     let x = 0
-    let y = 150
-    const fontSize = 72
+    let y = 0
+    const fontSize = options.fontSize || 72
     const fontScale = (1 / font.unitsPerEm) * fontSize
     const paths: opentype.Path[] = []
-    textGlyphs.forEach(glyph => {
-      const glyphPath = glyph.getPath(x, y, fontSize, {}, font)
-      paths.push(glyphPath)
-      //fullPath.extend(glyphPath)
+    textGlyphs.forEach(({ glyph, shaping }) => {
+      // x += shaping.x_offset * fontScale
+      // y += shaping.y_offset * fontScale
 
-      if (glyph.advanceWidth) {
-        x += glyph.advanceWidth * fontScale
+      const glyphPath = glyph.getPath(
+        x + shaping.xOffset * fontScale,
+        y + shaping.yOffset * fontScale,
+        fontSize,
+        {},
+        font
+      )
+      paths.push(glyphPath)
+
+      if (shaping.xAdvance) {
+        x += shaping.xAdvance * fontScale
+      }
+
+      if (shaping.yAdvance) {
+        y += shaping.yAdvance * fontScale
       }
     })
 
-    console.log('x width', x)
+    console.log('final x width:', x)
 
     return paths
   }
