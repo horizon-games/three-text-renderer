@@ -1,6 +1,6 @@
 import Font from './Font'
 import { TextOptions } from './TextOptions'
-import { Texture } from 'three'
+import { Texture, BufferGeometry, BufferAttribute } from 'three'
 import { getTextShaping } from './lib/raqm'
 import * as opentype from 'opentype.js'
 
@@ -26,12 +26,53 @@ class TextRenderer {
     this.fonts.delete(key)
   }
 
-  async createTextGeometry(text: string, options: Partial<TextOptions> = {}) {
+  async createTextGeometry(text: string, options: TextOptions) {
     if (!options.fontFace || !this.fonts.has(options.fontFace)) {
       throw new Error(
         `TextRenderer: Font face ${options.fontFace} is not added.`
       )
     }
+
+    const paths = await this.getTextContours(text, options)
+
+    const geometry = new BufferGeometry()
+
+    const boundingBoxes = paths.map(path => path.getBoundingBox())
+
+    const vertices: number[] = []
+    const indices: number[] = []
+
+    console.log(boundingBoxes)
+    boundingBoxes.forEach((bb, idx) => {
+      vertices.push(
+        bb.x1,
+        bb.y2,
+        0,
+        bb.x1,
+        bb.y1,
+        0,
+        bb.x2,
+        bb.y1,
+        0,
+        bb.x2,
+        bb.y2,
+        0
+      )
+      const faceIdx = idx * 4
+      indices.push(faceIdx + 0, faceIdx + 1, faceIdx + 2)
+      indices.push(faceIdx + 0, faceIdx + 2, faceIdx + 3)
+    })
+
+    console.log(vertices)
+    console.log(indices)
+
+    geometry.addAttribute(
+      'position',
+      new BufferAttribute(new Float32Array(vertices), 3)
+    )
+    geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
+
+    return geometry
   }
 
   async getTextContours(text: string, options: TextOptions) {
