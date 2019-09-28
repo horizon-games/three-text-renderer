@@ -1,27 +1,30 @@
 import TextRenderer from '../../src/index'
 import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
 
-import * as opentype from 'opentype.js'
 import { TextDirection, TextOptions } from '../../src/TextOptions'
 import {
   Scene,
   OrthographicCamera,
   Mesh,
   WebGLRenderer,
-  BoxGeometry,
   MeshBasicMaterial,
-  PerspectiveCamera,
-  PlaneBufferGeometry,
-  DoubleSide
+  DoubleSide,
+  Box3Helper,
+  Color
 } from 'three'
 
 async function main() {
+  const scene = new Scene()
+  const renderer = new WebGLRenderer()
+  document.body.appendChild(renderer.domElement)
+  renderer.setSize(window.innerWidth, window.innerHeight)
+
   const textRenderer = new TextRenderer()
 
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
 
   const testString = 'مرحبا'
-  const fontSize = 192
+  const fontSize = 92
   const options: TextOptions = {
     fontFace: 'Scheherazade-Bold',
     fontSize,
@@ -30,29 +33,21 @@ async function main() {
   }
 
   const geometry = await textRenderer.createTextGeometry(testString, options)
-
   console.log(geometry)
+
+  const { boundingBox } = geometry
+
+  console.log(boundingBox)
 
   const camera = new OrthographicCamera(
     window.innerWidth / -2,
     window.innerWidth / 2,
     window.innerHeight / -2,
     window.innerHeight / 2,
-    -window.innerWidth / 2,
+    window.innerWidth / -2,
     window.innerWidth / 2
   )
   camera.position.z = 5
-
-  const scene = new Scene()
-  const renderer = new WebGLRenderer()
-  document.body.appendChild(renderer.domElement)
-
-  renderer.setSize(window.innerWidth, window.innerHeight)
-
-  const planeGeometry = new PlaneBufferGeometry(300, 100)
-  const material = new MeshBasicMaterial({ color: 0xcccccc })
-  const plane = new Mesh(planeGeometry, material)
-  //scene.add(plane)
   scene.add(camera)
 
   const mesh = new Mesh(
@@ -61,13 +56,20 @@ async function main() {
   )
   scene.add(mesh)
 
+  const box = new Box3Helper(boundingBox, new Color(0x00ff00))
+  mesh.add(box)
+
+  const width = Math.abs(boundingBox.min.x - boundingBox.max.x)
+  geometry.translate(-width / 2, 0, 0)
+
   const loop = () => {
     renderer.render(scene, camera)
 
     requestAnimationFrame(loop)
 
-    // mesh.rotation.x += 0.01
-    // mesh.rotation.y += 0.01
+    mesh.rotation.x += 0.01
+    mesh.rotation.y += 0.01
+    mesh.rotation.z += 0.01
   }
 
   requestAnimationFrame(loop)

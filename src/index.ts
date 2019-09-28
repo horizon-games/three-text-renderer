@@ -73,6 +73,8 @@ class TextRenderer {
     )
     geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
 
+    geometry.computeBoundingBox()
+
     return geometry
   }
 
@@ -114,26 +116,12 @@ class TextRenderer {
 
     console.log(textGlyphs.map(x => x.glyph.name).join(''))
 
-    // // get glyph paths
-    // const glyphPaths: opentype.Path[] = []
-    // let gX = 0
-    // let gY = 0
-    // textGlyphs.forEach(glyph => {
-    //   const glyphPath = glyph.getPath(gX, gY, fontSize, {}, font)
-    //   glyphPaths.push(glyphPath)
-
-    //   gX += glyph.advanceWidth
-    // })
-
     let x = 0
     let y = 0
     const fontSize = options.fontSize || 72
     const fontScale = (1 / font.unitsPerEm) * fontSize
     const paths: opentype.Path[] = []
     textGlyphs.forEach(({ glyph, shaping }) => {
-      // x += shaping.x_offset * fontScale
-      // y += shaping.y_offset * fontScale
-
       const glyphPath = glyph.getPath(
         x + shaping.xOffset * fontScale,
         y + shaping.yOffset * fontScale,
