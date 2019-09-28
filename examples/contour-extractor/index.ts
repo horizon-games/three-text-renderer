@@ -64,21 +64,21 @@ async function main() {
 
     context.clearRect(0, 0, canvas.width, canvas.height)
 
-    // Draw harfbuzz:on indicator
-    if (harfbuzz) {
-      context.fillStyle = 'rgba(0, 255, 0, 1)'
-      context.fillRect(0, 0, 10, 10)
-    }
-
     context.translate(0, fontSize / 2)
+
+    context.fillStyle = 'rgba(240, 240, 240, 1)'
+
+    // Draw bounding boxes
+    boundingBoxes.forEach(bb => {
+      context.fillRect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1)
+    })
 
     // Draw harfbuzz output or naive opentype output
     harfbuzz
       ? fullPath.draw(context)
       : font.draw(context, testString, 0, 0, fontSize)
 
-    context.strokeStyle = 'rgba(0, 0, 255, 0.9)'
-
+    context.strokeStyle = 'rgba(0, 0, 255, 1)'
     // Draw bounding boxes
     boundingBoxes.forEach(bb => {
       context.strokeRect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1)

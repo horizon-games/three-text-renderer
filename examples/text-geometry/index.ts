@@ -18,13 +18,14 @@ async function main() {
   const renderer = new WebGLRenderer()
   document.body.appendChild(renderer.domElement)
   renderer.setSize(window.innerWidth, window.innerHeight)
+  renderer.setClearColor(0xffffff)
 
   const textRenderer = new TextRenderer()
 
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
 
   const testString = 'مرحبا'
-  const fontSize = 92
+  const fontSize = 192
   const options: TextOptions = {
     fontFace: 'Scheherazade-Bold',
     fontSize,
@@ -52,11 +53,11 @@ async function main() {
 
   const mesh = new Mesh(
     geometry,
-    new MeshBasicMaterial({ color: 0xff0000, side: DoubleSide })
+    new MeshBasicMaterial({ color: 'rgb(240, 240, 240)', side: DoubleSide })
   )
   scene.add(mesh)
 
-  const box = new Box3Helper(boundingBox, new Color(0x00ff00))
+  const box = new Box3Helper(boundingBox, new Color(0x0000ff))
   mesh.add(box)
 
   const width = Math.abs(boundingBox.min.x - boundingBox.max.x)
