@@ -45,37 +45,57 @@ class TextRenderer {
       )
     }
 
-    const linePaths = await this.getTextContours(text, options)
+    const fontFace = this.fonts.get(options.fontFace)!
 
-    // TODO: Send linePaths for formatter
+    const { font } = await fontFace.use()
+    const { ascender, unitsPerEm } = font
+    const fontSize = options.fontSize || 72
+    const fontScale = (1 / unitsPerEm) * fontSize
+    const lineHeight = ascender * fontScale
 
+    console.log('lineHeight', lineHeight)
+    const lines = await this.getTextContours(text, options)
     const geometry = new BufferGeometry()
-
-    const boundingBoxes = paths.map(path => path.getBoundingBox())
-
     const vertices: number[] = []
     const indices: number[] = []
 
-    console.log(boundingBoxes)
-    boundingBoxes.forEach((bb, idx) => {
-      vertices.push(
-        bb.x1,
-        bb.y2,
-        0,
-        bb.x1,
-        bb.y1,
-        0,
-        bb.x2,
-        bb.y1,
-        0,
-        bb.x2,
-        bb.y2,
-        0
-      )
-      const faceIdx = idx * 4
-      indices.push(faceIdx + 0, faceIdx + 1, faceIdx + 2)
-      indices.push(faceIdx + 0, faceIdx + 2, faceIdx + 3)
+    let currIdx = 0
+    let xOffset = 0
+    let yOffset = 0
+
+    lines.forEach(paths => {
+      const boundingBoxes = paths.map(path => path.getBoundingBox())
+      const z = 0
+
+      boundingBoxes.forEach((bb, idx) => {
+        const faceIdx = currIdx + idx * 4
+
+        vertices.push(
+          bb.x1 + xOffset,
+          bb.y2 + yOffset,
+          z,
+          bb.x1 + xOffset,
+          bb.y1 + yOffset,
+          z,
+          bb.x2 + xOffset,
+          bb.y1 + yOffset,
+          z,
+          bb.x2 + xOffset,
+          bb.y2 + yOffset,
+          z
+        )
+
+        indices.push(faceIdx + 0, faceIdx + 1, faceIdx + 2)
+        indices.push(faceIdx + 0, faceIdx + 2, faceIdx + 3)
+      })
+
+      currIdx += boundingBoxes.length * 4
+
+      // TODO support xOffsets for TTB direction
+      yOffset += lineHeight
     })
+
+    console.log('currIndx', currIdx)
 
     console.log(vertices)
     console.log(indices)
@@ -85,6 +105,8 @@ class TextRenderer {
       new BufferAttribute(new Float32Array(vertices), 3)
     )
     geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
+
+    // TODO: Send linePaths for formatter
 
     geometry.computeBoundingBox()
 
