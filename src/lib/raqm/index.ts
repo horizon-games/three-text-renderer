@@ -74,6 +74,7 @@ const getTextShaping = (
   //raqm.hb_font_destroy(font3) // rq will hold a reference to font3
   raqm.raqm_set_par_direction(rq, direction)
   raqm.raqm_set_language(rq, encodedLang_ptr, 0, encodedText.byteLength)
+  raqm.free(encodedLang_ptr)
   raqm.raqm_layout(rq)
 
   const count_ptr = raqm.malloc(4)
