@@ -5,6 +5,17 @@ import Font from './Font'
 import { getTextShaping } from './lib/raqm'
 import { TextOptions } from './TextOptions'
 
+interface GlyphShaping {
+  glyph: opentype.Glyph
+  shaping: {
+    glyphId: number
+    xAdvance: number
+    yAdvance: number
+    xOffset: number
+    yOffset: number
+  }
+}
+
 interface TextRendererOptions {}
 
 class TextRenderer {
@@ -34,7 +45,9 @@ class TextRenderer {
       )
     }
 
-    const paths = await this.getTextContours(text, options)
+    const linePaths = await this.getTextContours(text, options)
+
+    // TODO: Send linePaths for formatter
 
     const geometry = new BufferGeometry()
 
@@ -78,7 +91,10 @@ class TextRenderer {
     return geometry
   }
 
-  async getTextContours(text: string, options: TextOptions) {
+  async getTextContours(
+    text: string,
+    options: TextOptions
+  ): Promise<Array<opentype.Path[]>> {
     if (!options.fontFace || !this.fonts.has(options.fontFace)) {
       throw new Error(
         `TextRenderer: Font face ${options.fontFace} is not added.`
@@ -89,61 +105,66 @@ class TextRenderer {
 
     const { blob, font } = await fontFace.use()
     const { glyphs } = font
-    const shapingData = getTextShaping(
-      text,
-      blob,
-      options.lang,
-      options.direction
-    )
 
-    console.log('shaping:', shapingData)
+    const textLines = splitLines(text)
+    console.log('lines:', textLines)
 
-    interface GlyphShaping {
-      glyph: opentype.Glyph
-      shaping: {
-        glyphId: number
-        xAdvance: number
-        yAdvance: number
-        xOffset: number
-        yOffset: number
-      }
-    }
+    return textLines.reduce<Array<opentype.Path[]>>((acc, text) => {
+      const shapingData = getTextShaping(
+        text,
+        blob,
+        options.lang,
+        options.direction
+      )
 
-    const textGlyphs = shapingData.reduce<GlyphShaping[]>((acc, x) => {
-      acc.push({ glyph: glyphs.get(x.glyphId), shaping: x })
+      console.log('shaping:', shapingData)
+
+      const textGlyphs = shapingData.reduce<GlyphShaping[]>((acc, x) => {
+        acc.push({ glyph: glyphs.get(x.glyphId), shaping: x })
+        return acc
+      }, [])
+
+      console.log(textGlyphs.map(x => x.glyph.name).join(''))
+
+      let x = 0
+      let y = 0
+      const fontSize = options.fontSize || 72
+      const fontScale = (1 / font.unitsPerEm) * fontSize
+      const paths: opentype.Path[] = []
+      textGlyphs.forEach(({ glyph, shaping }) => {
+        const glyphPath = glyph.getPath(
+          x + shaping.xOffset * fontScale,
+          y + shaping.yOffset * fontScale,
+          fontSize,
+          {},
+          font
+        )
+        paths.push(glyphPath)
+
+        if (shaping.xAdvance) {
+          x += shaping.xAdvance * fontScale
+        }
+
+        if (shaping.yAdvance) {
+          y += shaping.yAdvance * fontScale
+        }
+      })
+
+      acc.push(paths)
+
       return acc
     }, [])
-
-    console.log(textGlyphs.map(x => x.glyph.name).join(''))
-
-    let x = 0
-    let y = 0
-    const fontSize = options.fontSize || 72
-    const fontScale = (1 / font.unitsPerEm) * fontSize
-    const paths: opentype.Path[] = []
-    textGlyphs.forEach(({ glyph, shaping }) => {
-      const glyphPath = glyph.getPath(
-        x + shaping.xOffset * fontScale,
-        y + shaping.yOffset * fontScale,
-        fontSize,
-        {},
-        font
-      )
-      paths.push(glyphPath)
-
-      if (shaping.xAdvance) {
-        x += shaping.xAdvance * fontScale
-      }
-
-      if (shaping.yAdvance) {
-        y += shaping.yAdvance * fontScale
-      }
-    })
-
-    console.log('final x width:', x)
-
-    return paths
   }
+
+  format(lines: any) {
+    // Return formatted glyphs by line
+  }
+}
+
+// Split text on line breaks
+const LINE_BREAK_REGEXP = /\r?\n/
+const splitLines = (text: string): string[] => {
+  return text.trim().split(LINE_BREAK_REGEXP)
 }
 
 export default TextRenderer

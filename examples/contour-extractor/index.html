@@ -1,8 +1,22 @@
 <html>
   <head>
     <title>Three Text Renderer</title>
+    <style type="text/css">
+      textarea#text {
+        height: 96px;
+        width: 100%;
+        margin-bottom: 24px;
+        font-size: 36px;
+        resize: none;
+      }
+
+      textarea:focus {
+        outline: none;
+      }
+    </style>
   </head>
   <body>
+    <textarea type="text" name="text" id="text"></textarea>
     <script type="text/javascript" src="index.ts"></script>
   </body>
 </html>
