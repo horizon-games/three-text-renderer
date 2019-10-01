@@ -42,7 +42,6 @@ async function main() {
   const input = document.querySelector('textarea#text')! as HTMLTextAreaElement
 
   input.addEventListener('keyup', ev => update(input.value))
-  input.addEventListener('change', ev => update(input.value))
 
   input.value = testString
 
