@@ -13,7 +13,7 @@ import BinPacker from '../../../../src/BinPacker'
 import { delay } from '../../utils/asyncUtils'
 export default class TestMSDFGenScene extends BaseTestScene {
   pivot: Object3D
-  constructor(testId = 0) {
+  constructor(testId = 5) {
     super()
 
     this.camera.position.z -= 0.2
@@ -44,6 +44,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
 			for(let i = 0; i < maxBins; i++){
 				const bin = new Vector2(Math.round(rand(binMinSize, binMaxSize)), Math.round(rand(binMinSize, binMaxSize)))
 				const packing = binPacker.add(bin, true)
+				if(!packing.position) throw new Error('No more space in atlas')
 				const pos = packing.position
 				let h = Math.random() * 0.2
 				if(packing.angle !== 0) {
@@ -95,8 +96,8 @@ export default class TestMSDFGenScene extends BaseTestScene {
     try{
       tests[testId]()
     } catch(e) {
-      console.error("Invalid test requested. Using test 0 instead.")
-      tests[0]()
+      console.error("Invalid test requested. Using test 2 instead.")
+      tests[2]()
     }
 
     this.pivot = pivot

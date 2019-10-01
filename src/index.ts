@@ -60,7 +60,7 @@ class TextRenderer {
     const indices: number[] = []
 
     let currIdx = 0
-    let xOffset = 0
+    const xOffset = 0
     let yOffset = 0
 
     lines.forEach(paths => {
@@ -116,7 +116,7 @@ class TextRenderer {
   async getTextContours(
     text: string,
     options: TextOptions
-  ): Promise<Array<opentype.Path[]>> {
+  ): Promise<opentype.Path[][]> {
     if (!options.fontFace || !this.fonts.has(options.fontFace)) {
       throw new Error(
         `TextRenderer: Font face ${options.fontFace} is not added.`
@@ -131,7 +131,7 @@ class TextRenderer {
     const textLines = splitLines(text)
     console.log('lines:', textLines)
 
-    return textLines.reduce<Array<opentype.Path[]>>((acc, text) => {
+    return textLines.reduce<opentype.Path[][]>((acc, text) => {
       const shapingData = getTextShaping(
         text,
         blob,
