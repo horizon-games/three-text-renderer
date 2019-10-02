@@ -89,7 +89,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
         makeBinTest(1024, 8, 30, 2400, 0)
       },
       () => {
-        makeBinTest(2048, 16, 60, 2000, 0)
+        makeBinTest(4096, 16, 60, 11000, 0)
       }
     ]
 

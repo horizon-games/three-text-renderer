@@ -3,7 +3,7 @@ import { Vector2 } from 'three'
 import { removeFromArray } from './utils/arrayUtils'
 
 class Corner extends Vector2 {
-  waste: number
+  waste: number = Infinity
   constructor(x: number, y: number) {
     super(x, y)
   }
@@ -86,10 +86,12 @@ export default class BinPacker {
   }
   private getBestRotatable(bin: Vector2) {
     const bestCorner1 = this.scoreCorners(bin)
-    const firstWaste = bestCorner1.waste
+    const firstWaste = bestCorner1 ? bestCorner1.waste : Infinity
     const bestCorner2 = this.scoreCorners(new Vector2(bin.y, bin.x))
+    const secondWaste = bestCorner2 ? bestCorner2.waste : Infinity
+    if(firstWaste === Infinity && secondWaste === Infinity) throw new Error('Could not fit bin, even with rotation')
     const bestCorner =
-      firstWaste < bestCorner2.waste ? bestCorner1 : bestCorner2
+      firstWaste < secondWaste ? bestCorner1 : bestCorner2
 
     let angle = 0
     if (bestCorner === bestCorner2) {
