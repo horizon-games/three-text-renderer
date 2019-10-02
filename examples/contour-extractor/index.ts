@@ -10,12 +10,16 @@ import AmiriBold from '../fonts/Amiri-Bold.ttf'
 import * as opentype from 'opentype.js'
 import { TextDirection } from '../../src/TextOptions'
 
-const canvas = document.createElement('canvas')
+//const initialText = 'This != tést!'
+//const initialText = 'مرحبا يا عالم'
+//const initialText = 'مممممم'
+//const initialText = 'مرحبا'
+const initialText = 'Hello, World!\nNext line.'
+
+const canvas = document.querySelector('canvas') as HTMLCanvasElement
 const context = canvas.getContext('2d')!
 
-document.body.append(canvas)
-
-canvas.width = window.innerWidth
+canvas.width = window.innerWidth - 48
 canvas.height = window.innerHeight
 
 // canvas.style.width = `${canvas.width / window.devicePixelRatio}px`
@@ -23,72 +27,102 @@ canvas.height = window.innerHeight
 
 async function main() {
   const textRenderer = new TextRenderer()
-  console.log(textRenderer)
 
+  // Add fonts
   textRenderer.addFont('Barlow-Bold', BarlowBold)
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
   textRenderer.addFont('Amiri-Bold', AmiriBold)
 
-  //const testString = 'This != tést!'
-  //const testString = 'مرحبا يا عالم'
-  //const testString = 'مممممم'
-  //const testString = 'مرحبا'
-  const testString = 'Hello, World!\n'
-  const { font } = await textRenderer.fonts.get('Scheherazade-Bold')!.use()
-  const { ascender, descender, unitsPerEm } = font
-  const fontSize = 72
-  const fontScale = (1 / unitsPerEm) * fontSize
-  const lineHeight = fontScale * ascender
-  const input = document.querySelector('textarea#text')! as HTMLTextAreaElement
+  const input = {
+    text: document.querySelector('textarea#text')! as HTMLTextAreaElement,
+    font: document.querySelector('select#font')! as HTMLSelectElement,
+    fontSize: document.querySelector('input#font-size')! as HTMLInputElement,
+    lineHeight: document.querySelector(
+      'input#line-height'
+    )! as HTMLInputElement,
+    textDirection: document.querySelector(
+      'select#text-direction'
+    )! as HTMLSelectElement,
+    maxWidth: document.querySelector('input#max-width')! as HTMLInputElement,
+    maxHeight: document.querySelector('input#max-height')! as HTMLInputElement
+  }
 
-  input.addEventListener('keyup', ev => update(input.value))
+  input.text.value = initialText
 
-  input.value = testString
+  for (const [key, font] of textRenderer.fonts) {
+    input.font.options.add(new Option(key, font.key))
+  }
 
-  async function update(text: string) {
-    const lines = await textRenderer.getTextContours(text, {
-      fontFace: 'Barlow-Bold',
-      fontSize,
+  input.fontSize.value = String(72)
+  input.lineHeight.value = String(1.2)
+
+  input.textDirection.options.add(new Option('LTR', String(TextDirection.LTR)))
+  input.textDirection.options.add(new Option('RTL', String(TextDirection.RTL)))
+  input.textDirection.options.add(new Option('TTB', String(TextDirection.TTB)))
+
+  input.maxWidth.value = String(640)
+  input.maxHeight.value = String(640)
+
+  const inputKeys = Object.keys(input) as Array<keyof typeof input>
+  inputKeys.forEach(key => {
+    input[key].addEventListener('change', update)
+  })
+  input.text.addEventListener('keyup', update)
+
+  async function update() {
+    const { font } = await textRenderer.fonts.get(input.font.value)!.use()
+    const { ascender, unitsPerEm } = font
+    const fontSize = Number(input.fontSize.value) || 1
+    const fontScale = (1 / unitsPerEm) * fontSize
+    const lineHeight =
+      (Number(input.lineHeight.value) || 1) * fontScale * ascender
+    const maxWidth = Number(input.maxWidth.value)
+    const maxHeight = Number(input.maxHeight.value)
+    const lines = await textRenderer.getTextContours(input.text.value, {
+      fontFace: input.font.value,
+      fontSize: Number(input.fontSize.value),
       lang: 'en',
-      direction: TextDirection.LTR
+      direction: (TextDirection[
+        input.textDirection.value as any
+      ] as any) as number
     })
-    console.log('lines', lines)
 
     context.restore()
     context.save()
 
     context.clearRect(0, 0, canvas.width, canvas.height)
 
+    // Draw lines
+    context.strokeStyle = 'rgba(240, 0, 0, 0.5)'
+
+    for (let i = lineHeight; i < canvas.height; i += lineHeight) {
+      context.beginPath()
+      context.moveTo(0, i)
+      context.lineTo(canvas.width, i)
+      context.stroke()
+      context.closePath()
+    }
+
+    // Draw container
+    context.strokeStyle = 'rgba(0, 255, 0, 1)'
+    context.strokeRect(0, 0, maxWidth, maxHeight)
+
     lines.forEach(paths => {
-      console.log('paths', paths)
-
       const boundingBoxes = paths.map(path => path.getBoundingBox())
-      console.log('bounding box', boundingBoxes)
-
-      const fullPath = paths.reduce<opentype.Path>((acc, path) => {
+      const mergedPath = paths.reduce<opentype.Path>((acc, path) => {
         acc.extend(path)
         return acc
       }, new opentype.Path())
 
-      renderLine(fullPath, boundingBoxes)
+      renderLine(mergedPath, boundingBoxes, lineHeight)
     })
   }
 
   function renderLine(
     path: opentype.Path,
-    boundingBoxes: opentype.BoundingBox[]
+    boundingBoxes: opentype.BoundingBox[],
+    lineHeight: number
   ) {
-    // Draw lines
-    context.strokeStyle = 'rgba(240, 0, 0, 0.5)'
-
-    for (let i = lineHeight; i < canvas.height; i += lineHeight) {
-      context.beginPath() // Start a new path
-      context.moveTo(0, i) // Move the pen to (30, 50)
-      context.lineTo(canvas.width, i) // Draw a line to (150, 100)
-      context.stroke()
-      context.closePath()
-    }
-
     context.translate(0, lineHeight)
 
     context.fillStyle = 'rgba(240, 240, 240, 1)'
@@ -107,12 +141,7 @@ async function main() {
     })
   }
 
-  update(input.value)
-
-  // setInterval(() => {
-  //   harfbuzz = !harfbuzz // Flip back and forth
-  //   render()
-  // }, 1000)
+  update()
 }
 
 main()

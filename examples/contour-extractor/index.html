@@ -2,21 +2,110 @@
   <head>
     <title>Three Text Renderer</title>
     <style type="text/css">
+      html,
+      body {
+        border: 0;
+        margin: 0;
+        padding: 0;
+      }
+
+      body > * {
+        box-sizing: border-box;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
       textarea#text {
         height: 96px;
         width: 100%;
         margin-bottom: 24px;
         font-size: 36px;
-        resize: none;
       }
 
       textarea:focus {
         outline: none;
       }
+
+      .font-options {
+        margin-bottom: 10px;
+        display: flex;
+      }
+
+      .font-option {
+        margin-right: 10px;
+      }
+
+      label {
+        text-transform: uppercase;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .canvas-container {
+        margin: 24px;
+
+        box-shadow: 1px 0 24px rgba(0, 0, 0, 0.1);
+      }
+
+      canvas {
+      }
     </style>
   </head>
   <body>
-    <textarea type="text" name="text" id="text"></textarea>
+    <header>
+      <div class="font-options">
+        <div class="font-option">
+          <label>
+            Font
+            <select id="font"></select>
+          </label>
+        </div>
+        <div class="font-option">
+          <label>
+            Text direction
+            <select id="text-direction"></select>
+          </label>
+        </div>
+        <div class="font-option">
+          <label>
+            Size
+            <input id="font-size" name="font-size" type="number" />
+          </label>
+        </div>
+        <div class="font-option">
+          <label>
+            Line height
+            <input
+              id="line-height"
+              name="line-height"
+              type="number"
+              min="0.1"
+              step="0.1"
+            />
+          </label>
+        </div>
+        <div class="font-option">
+          <label>
+            Width
+            <input id="max-width" name="max-width" type="number" />
+          </label>
+        </div>
+        <div class="font-option">
+          <label>
+            Height
+            <input id="max-height" name="max-height" type="number" />
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <textarea type="text" name="text" id="text"></textarea>
+      </div>
+    </header>
+
+    <div class="canvas-container">
+      <canvas></canvas>
+    </div>
+
     <script type="text/javascript" src="index.ts"></script>
   </body>
 </html>
