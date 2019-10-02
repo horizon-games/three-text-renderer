@@ -2,27 +2,72 @@
   <head>
     <title>Three Text Renderer</title>
     <style type="text/css">
+      @import url('https://fonts.googleapis.com/css?family=Dosis');
+
       html,
       body {
         border: 0;
         margin: 0;
         padding: 0;
+        font-size: 10px;
+        color: #455a64;
       }
 
       body > * {
         box-sizing: border-box;
-        font-family: Arial, Helvetica, sans-serif;
+        font-family: 'Dosis', sans-serif;
       }
 
-      textarea#text {
+      h1 {
+        color: #250780;
+
+        font-size: 2.1rem;
+        margin-bottom: 0px;
+      }
+      h2 {
+        color: white;
+        text-shadow: 0px 2px #4527a0;
+        font-size: 2.9rem;
+      }
+      h1,
+      h2 {
+        margin-top: 0;
+      }
+
+      header {
+        background-color: #7e57c2;
+        padding: 24px;
+      }
+
+      input,
+      select,
+      textarea {
+        border-radius: 5px;
+        background-color: white;
+        height: 42px;
+        line-height: 48px;
+        padding: 0 10px;
+        border: none;
+        font-size: 2.1rem;
+        transition: box-shadow 300ms, background-color 300ms;
+        color: inherit;
+        background-color: #fafafa;
+      }
+
+      textarea {
         height: 96px;
         width: 100%;
-        margin-bottom: 24px;
-        font-size: 36px;
+        resize: none;
+        line-height: 1.2;
+        padding: 10px;
       }
 
+      input:focus,
+      select:focus,
       textarea:focus {
         outline: none;
+        box-shadow: 0.2rem 0.8rem 1.6rem #5e35b1;
+        background-color: white;
       }
 
       .font-options {
@@ -31,19 +76,43 @@
       }
 
       .font-option {
-        margin-right: 10px;
+        margin-right: 24px;
+        margin-bottom: 24px;
+      }
+
+      #text-direction {
+        width: 96px;
+      }
+
+      #font-size,
+      #line-height {
+        width: 64px;
+      }
+
+      #max-width,
+      #max-height {
+        width: 96px;
       }
 
       label {
-        text-transform: uppercase;
-        font-size: 11px;
-        font-weight: 600;
+        font-size: 1.7rem;
+        display: block;
+        color: white;
+        margin-bottom: 10px;
+        padding-left: 2px;
+        text-shadow: 0px 1px #4527a0;
       }
 
       .canvas-container {
         margin: 24px;
+        border-radius: 5px;
+        background-color: white;
+        box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
+      }
 
-        box-shadow: 1px 0 24px rgba(0, 0, 0, 0.1);
+      .canvas-container-inner {
+        border-radius: 5px;
+        overflow: hidden;
       }
 
       canvas {
@@ -52,58 +121,52 @@
   </head>
   <body>
     <header>
+      <h1>Three Text Renderer</h1>
+      <h2>Contour Extracter</h2>
+
       <div class="font-options">
         <div class="font-option">
-          <label>
-            Font
-            <select id="font"></select>
-          </label>
+          <label for="font">Font</label>
+          <select id="font"></select>
         </div>
         <div class="font-option">
-          <label>
-            Text direction
-            <select id="text-direction"></select>
-          </label>
+          <label for="text-direction">Text Direction</label>
+          <select id="text-direction"></select>
         </div>
-        <div class="font-option">
-          <label>
-            Size
-            <input id="font-size" name="font-size" type="number" />
-          </label>
+        <div class="font-option font-option-number">
+          <label for="font-size">Font Size</label>
+          <input id="font-size" name="font-size" type="number" />
         </div>
-        <div class="font-option">
-          <label>
-            Line height
-            <input
-              id="line-height"
-              name="line-height"
-              type="number"
-              min="0.1"
-              step="0.1"
-            />
-          </label>
+        <div class="font-option font-option-number">
+          <label for="line-height">Line Height</label>
+          <input
+            id="line-height"
+            name="line-height"
+            type="number"
+            min="0.1"
+            step="0.1"
+          />
         </div>
-        <div class="font-option">
-          <label>
-            Width
-            <input id="max-width" name="max-width" type="number" />
-          </label>
+        <div class="font-option font-option-number">
+          <label for="max-width"> Max Width</label>
+          <input id="max-width" name="max-width" type="number" />
         </div>
-        <div class="font-option">
-          <label>
-            Height
-            <input id="max-height" name="max-height" type="number" />
-          </label>
+        <div class="font-option font-option-number">
+          <label for="max-height"> Max Height</label>
+          <input id="max-height" name="max-height" type="number" />
         </div>
       </div>
 
       <div>
+        <label for="text">Text Input</label>
         <textarea type="text" name="text" id="text"></textarea>
       </div>
     </header>
 
     <div class="canvas-container">
-      <canvas></canvas>
+      <div class="canvas-container-inner">
+        <canvas></canvas>
+      </div>
     </div>
 
     <script type="text/javascript" src="index.ts"></script>
