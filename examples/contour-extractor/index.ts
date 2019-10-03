@@ -10,20 +10,16 @@ import AmiriBold from '../fonts/Amiri-Bold.ttf'
 import * as opentype from 'opentype.js'
 import { TextDirection } from '../../src/TextOptions'
 
+import { drawRuler, RulerDirection } from './ruler'
+
 //const initialText = 'This != tést!'
 //const initialText = 'مرحبا يا عالم'
 //const initialText = 'مممممم'
 //const initialText = 'مرحبا'
 const initialText = 'Hello, World!\nNext line.'
 
-const canvas = document.querySelector('canvas') as HTMLCanvasElement
+const canvas = document.querySelector('canvas#viewport') as HTMLCanvasElement
 const context = canvas.getContext('2d')!
-
-canvas.width = window.innerWidth - 48
-canvas.height = window.innerHeight
-
-// canvas.style.width = `${canvas.width / window.devicePixelRatio}px`
-// canvas.style.height = `${canvas.height / window.devicePixelRatio}px`
 
 async function main() {
   const textRenderer = new TextRenderer()
@@ -60,8 +56,8 @@ async function main() {
   input.textDirection.options.add(new Option('RTL', String(TextDirection.RTL)))
   input.textDirection.options.add(new Option('TTB', String(TextDirection.TTB)))
 
-  input.maxWidth.value = String(640)
-  input.maxHeight.value = String(640)
+  input.maxWidth.value = String(Math.floor(window.innerWidth / 100) * 100)
+  input.maxHeight.value = String(400)
 
   const inputKeys = Object.keys(input) as Array<keyof typeof input>
   inputKeys.forEach(key => {
@@ -69,43 +65,88 @@ async function main() {
   })
   input.text.addEventListener('keyup', update)
 
+  let lines: opentype.Path[][] = []
+  let fontSize: number
+  let fontScale: number
+  let lineHeight: number
+  let maxWidth: number
+  let maxHeight: number
+
   async function update() {
     const { font } = await textRenderer.fonts.get(input.font.value)!.use()
     const { ascender, unitsPerEm } = font
-    const fontSize = Number(input.fontSize.value) || 1
-    const fontScale = (1 / unitsPerEm) * fontSize
-    const lineHeight =
-      (Number(input.lineHeight.value) || 1) * fontScale * ascender
-    const maxWidth = Number(input.maxWidth.value)
-    const maxHeight = Number(input.maxHeight.value)
-    const lines = await textRenderer.getTextContours(input.text.value, {
+    fontSize = Number(input.fontSize.value) || 1
+    fontScale = (1 / unitsPerEm) * fontSize
+    lineHeight = (Number(input.lineHeight.value) || 1) * fontScale * ascender
+    maxWidth = Number(input.maxWidth.value)
+    maxHeight = Number(input.maxHeight.value)
+    lines = await textRenderer.getTextContours(input.text.value, {
       fontFace: input.font.value,
       fontSize: Number(input.fontSize.value),
       lang: 'en',
-      direction: (TextDirection[
-        input.textDirection.value as any
-      ] as any) as number
+      direction: Number(input.textDirection.value),
+      maxWidth
     })
+
+    render()
+  }
+
+  function handleResize() {
+    const width = window.innerWidth
+    const height = window.innerHeight
+    const pixelRatio = window.devicePixelRatio
+
+    canvas.width = width * pixelRatio
+    canvas.height = height * pixelRatio
+    canvas.style.width = `${width}px`
+    canvas.style.height = `${height}px`
+
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+
+    render()
+  }
+
+  window.addEventListener('resize', handleResize)
+
+  handleResize()
+
+  function render() {
+    drawRuler(
+      'canvas.ruler.ruler-horizontal',
+      RulerDirection.Horizontal,
+      maxWidth
+    )
+    drawRuler('canvas.ruler.ruler-vertical', RulerDirection.Vertical, maxHeight)
 
     context.restore()
     context.save()
 
-    context.clearRect(0, 0, canvas.width, canvas.height)
+    // Clear
+    context.fillStyle = '#eee'
+    context.fillRect(0, 0, canvas.width, canvas.height)
+
+    // Draw container
+    context.fillStyle = '#fff'
+    context.fillRect(0, 0, maxWidth, maxHeight)
 
     // Draw lines
-    context.strokeStyle = 'rgba(240, 0, 0, 0.5)'
+    context.strokeStyle = '#eee'
 
-    for (let i = lineHeight; i < canvas.height; i += lineHeight) {
+    for (let x = 0; x < maxWidth; x += 50) {
       context.beginPath()
-      context.moveTo(0, i)
-      context.lineTo(canvas.width, i)
+      context.moveTo(x, 0)
+      context.lineTo(x, canvas.height)
       context.stroke()
       context.closePath()
     }
 
-    // Draw container
-    context.strokeStyle = 'rgba(0, 255, 0, 1)'
-    context.strokeRect(0, 0, maxWidth, maxHeight)
+    for (let y = 0; y < maxHeight; y += 50) {
+      context.beginPath()
+      context.moveTo(0, y)
+      context.lineTo(canvas.width, y)
+      context.stroke()
+      context.closePath()
+    }
 
     lines.forEach(paths => {
       const boundingBoxes = paths.map(path => path.getBoundingBox())
@@ -125,12 +166,11 @@ async function main() {
   ) {
     context.translate(0, lineHeight)
 
-    context.fillStyle = 'rgba(240, 240, 240, 1)'
-
     // Draw bounding boxes
-    boundingBoxes.forEach(bb => {
-      context.fillRect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1)
-    })
+    // context.fillStyle = 'rgba(240, 240, 240, 1)'
+    // boundingBoxes.forEach(bb => {
+    //   context.fillRect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1)
+    // })
 
     path.draw(context)
 

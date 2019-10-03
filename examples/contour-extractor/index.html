@@ -36,7 +36,11 @@
 
       header {
         background-color: #7e57c2;
-        padding: 24px;
+        padding: 30px;
+        border-bottom: 1px solid #4527a0;
+      }
+
+      main {
       }
 
       input,
@@ -76,8 +80,8 @@
       }
 
       .font-option {
-        margin-right: 24px;
-        margin-bottom: 24px;
+        margin-right: 30px;
+        margin-bottom: 10px;
       }
 
       #text-direction {
@@ -104,18 +108,33 @@
       }
 
       .canvas-container {
-        margin: 24px;
-        border-radius: 5px;
-        background-color: white;
-        box-shadow: 0 0 24px rgba(0, 0, 0, 0.1);
+        position: relative;
+        padding-top: 30px;
+        padding-left: 30px;
+        background-color: #333;
       }
 
       .canvas-container-inner {
-        border-radius: 5px;
         overflow: hidden;
+        background-color: white;
       }
 
-      canvas {
+      .ruler {
+        position: absolute;
+      }
+
+      .ruler-horizontal {
+        width: calc(100% - 30px);
+        height: 30px;
+        top: 0;
+        right: 0;
+      }
+
+      .ruler-vertical {
+        width: 30px;
+        height: calc(100% - 30px);
+        bottom: 0;
+        left: 0;
       }
     </style>
   </head>
@@ -163,11 +182,15 @@
       </div>
     </header>
 
-    <div class="canvas-container">
-      <div class="canvas-container-inner">
-        <canvas></canvas>
+    <main>
+      <div class="canvas-container">
+        <canvas class="ruler ruler-horizontal"></canvas>
+        <canvas class="ruler ruler-vertical"></canvas>
+        <div class="canvas-container-inner">
+          <canvas id="viewport"></canvas>
+        </div>
       </div>
-    </div>
+    </main>
 
     <script type="text/javascript" src="index.ts"></script>
   </body>
