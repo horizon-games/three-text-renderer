@@ -51,33 +51,46 @@ class TextRenderer {
     text: string,
     options: TextOptions
   ): Promise<Shaping[][]> {
-    const fontLoader = this.getFont(options.fontFace)
-    const { blob } = await fontLoader.use()
+    const {
+      blob,
+      font: { unitsPerEm }
+    } = await this.useFont(options.fontFace)
     const textLines = splitLines(text)
+    const { letterSpacing } = options
 
-    return textLines.reduce<Shaping[][]>((acc, text) => {
-      acc.push(getTextShaping(text, blob, options.lang, options.direction))
+    return textLines.map(text => {
+      const shaping = getTextShaping(
+        text,
+        blob,
+        options.lang,
+        options.direction
+      )
 
-      return acc
-    }, [])
+      if (letterSpacing) {
+        // Apply letter spacing to xAdvance - is this the best place for this?
+        shaping.forEach(glyph => {
+          glyph.xAdvance += letterSpacing * unitsPerEm
+        })
+      }
+
+      return shaping
+    })
   }
 
   async getTextContours(text: string, options: TextOptions): Promise<Path[][]> {
-    const fontLoader = this.getFont(options.fontFace)
-    const { font } = await fontLoader.use()
+    const { font } = await this.useFont(options.fontFace)
     const { glyphs } = font
     const textShapingLines = await this.getTextShaping(text, options)
-
-    const glyphShapingLines = textShapingLines.map(textShaping => {
+    const lines = textShapingLines.map(textShaping => {
       return textShaping.map(x => ({
         glyph: glyphs.get(x.glyphId),
         shaping: x
       }))
     })
 
-    this._formatLines(glyphShapingLines, options)
+    this._formatLines(lines, options)
 
-    return glyphShapingLines.reduce<Path[][]>((acc, glyphShaping) => {
+    return lines.reduce<Path[][]>((acc, glyphShaping) => {
       let x = 0
       let y = 0
       const fontSize = options.fontSize || 72
@@ -110,13 +123,12 @@ class TextRenderer {
   }
 
   async createTextGeometry(text: string, options: TextOptions) {
-    const fontLoader = this.getFont(options.fontFace)
-    const { font } = await fontLoader.use()
+    const lines = await this.getTextContours(text, options)
+    const { font } = await this.useFont(options.fontFace)
     const { ascender, unitsPerEm } = font
     const fontSize = options.fontSize || 72
     const fontScale = (1 / unitsPerEm) * fontSize
     const lineHeight = ascender * fontScale
-    const lines = await this.getTextContours(text, options)
     const geometry = new BufferGeometry()
     const vertices: number[] = []
     const indices: number[] = []
@@ -175,6 +187,8 @@ class TextRenderer {
     const fontSize = options.fontSize
     const fontScale = (1 / font.unitsPerEm) * fontSize
     const { maxWidth, maxHeight } = options
+
+    // TODO use letterSpacing property as well to calculate line widths
 
     if (maxWidth || maxHeight) {
       let lineIdx = 0

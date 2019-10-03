@@ -91,6 +91,7 @@
       .font-options {
         margin-bottom: 10px;
         display: flex;
+        flex-wrap: wrap;
       }
 
       .font-option {
@@ -98,13 +99,14 @@
         margin-bottom: 10px;
       }
 
-      #text-direction {
+      #text-direction,
+      #letter-spacing {
         width: 96px;
       }
 
       #font-size,
       #line-height {
-        width: 64px;
+        width: 80px;
       }
 
       #max-width,
@@ -297,12 +299,38 @@
           />
         </div>
         <div class="font-option font-option-number">
-          <label for="max-width"> Max Width</label>
-          <input id="max-width" name="max-width" type="number" />
+          <label for="max-width">Max Width</label>
+          <input
+            id="max-width"
+            name="max-width"
+            type="number"
+            placeholder="px"
+          />
         </div>
         <div class="font-option font-option-number">
-          <label for="max-height"> Max Height</label>
-          <input id="max-height" name="max-height" type="number" />
+          <label for="max-height">Max Height</label>
+          <input
+            id="max-height"
+            name="max-height"
+            type="number"
+            placeholder="px"
+          />
+        </div>
+
+        <div class="font-option font-option-number">
+          <label for="text-align">Alignment</label>
+          <select id="text-align"></select>
+        </div>
+
+        <div class="font-option font-option-number">
+          <label for="letter-spacing">Letter Spacing</label>
+          <input
+            id="letter-spacing"
+            name="letter-spacing"
+            type="number"
+            placeholder="em"
+            step="0.01"
+          />
         </div>
       </div>
 

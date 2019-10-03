@@ -8,7 +8,7 @@ import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
 import AmiriBold from '../fonts/Amiri-Bold.ttf'
 
 import { Path, BoundingBox } from 'opentype.js'
-import { TextDirection } from '../../src/TextOptions'
+import { TextDirection, TextAlign } from '../../src/TextOptions'
 
 import Ruler, { RulerDirection } from './ruler'
 
@@ -31,6 +31,10 @@ const input = {
   textDirection: document.querySelector(
     'select#text-direction'
   )! as HTMLSelectElement,
+  textAlign: document.querySelector('select#text-align')! as HTMLSelectElement,
+  letterSpacing: document.querySelector(
+    'input#letter-spacing'
+  )! as HTMLInputElement,
   maxWidth: document.querySelector('input#max-width')! as HTMLInputElement,
   maxHeight: document.querySelector('input#max-height')! as HTMLInputElement
 }
@@ -43,6 +47,7 @@ const inputDefaults: { [key: string]: string } = {
   text: 'Hello, World!\nNext line.',
   fontSize: String(72),
   lineHeight: String(1.2),
+  letterSpacing: String(0),
   maxWidth: String(Math.floor(window.innerWidth / 100) * 100),
   maxHeight: String(400)
 }
@@ -62,6 +67,10 @@ async function main() {
   input.textDirection.options.add(new Option('LTR', String(TextDirection.LTR)))
   input.textDirection.options.add(new Option('RTL', String(TextDirection.RTL)))
   input.textDirection.options.add(new Option('TTB', String(TextDirection.TTB)))
+
+  input.textAlign.options.add(new Option('Left', String(TextAlign.Left)))
+  input.textAlign.options.add(new Option('Right', String(TextAlign.Right)))
+  input.textAlign.options.add(new Option('Center', String(TextAlign.Center)))
 
   const inputKeys = Object.keys(input) as Array<keyof typeof input>
 
@@ -97,6 +106,7 @@ async function main() {
   async function update() {
     const { font } = await textRenderer.fonts.get(input.font.value)!.use()
     const { ascender, unitsPerEm } = font
+
     fontSize = Number(input.fontSize.value) || 1
     fontScale = (1 / unitsPerEm) * fontSize
     lineHeight = (Number(input.lineHeight.value) || 1) * fontScale * ascender
@@ -107,6 +117,8 @@ async function main() {
       fontSize: Number(input.fontSize.value),
       lang: 'en',
       direction: Number(input.textDirection.value),
+      align: input.textAlign.value as TextAlign,
+      letterSpacing: Number(input.letterSpacing.value),
       maxWidth,
       maxHeight
     })

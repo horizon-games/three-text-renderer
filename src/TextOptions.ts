@@ -8,6 +8,12 @@ export enum TextDirection {
   TTB
 }
 
+export enum TextAlign {
+  Left = 'left',
+  Right = 'right',
+  Center = 'center'
+}
+
 export type Language = 'en' | 'fr' | 'ar' | 'hi'
 
 export interface TextOptions {
@@ -15,6 +21,8 @@ export interface TextOptions {
   fontSize: number
   lang: Language
   direction: TextDirection
+  align?: TextAlign
+  letterSpacing?: number
   maxWidth?: number
   maxHeight?: number
   // color: Color | Gradient | string | number
