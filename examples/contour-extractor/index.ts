@@ -10,23 +10,18 @@ import AmiriBold from '../fonts/Amiri-Bold.ttf'
 import * as opentype from 'opentype.js'
 import { TextDirection } from '../../src/TextOptions'
 
-import { drawRuler, RulerDirection } from './ruler'
-
-//const initialText = 'This != tést!'
-//const initialText = 'مرحبا يا عالم'
-//const initialText = 'مممممم'
-//const initialText = 'مرحبا'
-const initialText = 'Hello, World!\nNext line.'
+import Ruler, { RulerDirection } from './ruler'
 
 const canvas = document.querySelector('canvas#viewport') as HTMLCanvasElement
 const context = canvas.getContext('2d')!
-
-const rulerHorizontalCanvas = document.querySelector(
-  'canvas.ruler.ruler-horizontal'
-) as HTMLCanvasElement
-const rulerVerticalCanvas = document.querySelector(
-  'canvas.ruler.ruler-vertical'
-) as HTMLCanvasElement
+const rulerHorizontal = new Ruler(
+  'canvas.ruler.ruler-horizontal',
+  RulerDirection.Horizontal
+)
+const rulerVertical = new Ruler(
+  'canvas.ruler.ruler-vertical',
+  RulerDirection.Vertical
+)
 
 const input = {
   text: document.querySelector('textarea#text')! as HTMLTextAreaElement,
@@ -40,6 +35,18 @@ const input = {
   maxHeight: document.querySelector('input#max-height')! as HTMLInputElement
 }
 
+const inputDefaults: { [key: string]: string } = {
+  // text: 'This != tést!',
+  // text: 'مرحبا يا عالم',
+  // text: 'مممممم',
+  // text: 'مرحبا',
+  text: 'Hello, World!\nNext line.',
+  fontSize: String(72),
+  lineHeight: String(1.2),
+  maxWidth: String(Math.floor(window.innerWidth / 100) * 100),
+  maxHeight: String(400)
+}
+
 async function main() {
   const textRenderer = new TextRenderer()
 
@@ -48,35 +55,33 @@ async function main() {
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
   textRenderer.addFont('Amiri-Bold', AmiriBold)
 
-  input.text.value = initialText
-
   for (const [key, font] of textRenderer.fonts) {
     input.font.options.add(new Option(key, font.key))
   }
-
-  input.fontSize.value = String(72)
-  input.lineHeight.value = String(1.2)
 
   input.textDirection.options.add(new Option('LTR', String(TextDirection.LTR)))
   input.textDirection.options.add(new Option('RTL', String(TextDirection.RTL)))
   input.textDirection.options.add(new Option('TTB', String(TextDirection.TTB)))
 
-  input.maxWidth.value = String(Math.floor(window.innerWidth / 100) * 100)
-  input.maxHeight.value = String(400)
-
   const inputKeys = Object.keys(input) as Array<keyof typeof input>
+
   inputKeys.forEach(key => {
     input[key].addEventListener('change', update)
+
+    if (key in inputDefaults) {
+      input[key].value = String(inputDefaults[key])
+    }
   })
+
   input.text.addEventListener('keyup', update)
 
-  rulerHorizontalCanvas.addEventListener('click', ev => {
+  rulerHorizontal.canvas.addEventListener('click', ev => {
     input.maxWidth.value = String((ev as any).layerX)
 
     update()
   })
 
-  rulerVerticalCanvas.addEventListener('click', ev => {
+  rulerVertical.canvas.addEventListener('click', ev => {
     input.maxHeight.value = String((ev as any).layerY)
 
     update()
@@ -102,21 +107,20 @@ async function main() {
       fontSize: Number(input.fontSize.value),
       lang: 'en',
       direction: Number(input.textDirection.value),
-      maxWidth
+      maxWidth,
+      maxHeight
     })
 
     render()
   }
 
   function handleResize() {
-    const width = window.innerWidth
-    const height = window.innerHeight
+    const width = window.innerWidth - 30
+    const height = window.innerHeight - 30
     const pixelRatio = window.devicePixelRatio
 
     canvas.width = width * pixelRatio
     canvas.height = height * pixelRatio
-    canvas.style.width = `${width}px`
-    canvas.style.height = `${height}px`
 
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
 
@@ -128,8 +132,8 @@ async function main() {
   handleResize()
 
   function render() {
-    drawRuler(rulerHorizontalCanvas, RulerDirection.Horizontal, maxWidth)
-    drawRuler(rulerVerticalCanvas, RulerDirection.Vertical, maxHeight)
+    rulerHorizontal.render(maxWidth)
+    rulerVertical.render(maxHeight)
 
     context.restore()
     context.save()
@@ -178,12 +182,6 @@ async function main() {
     lineHeight: number
   ) {
     context.translate(0, lineHeight)
-
-    // Draw bounding boxes
-    // context.fillStyle = 'rgba(240, 240, 240, 1)'
-    // boundingBoxes.forEach(bb => {
-    //   context.fillRect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1)
-    // })
 
     path.draw(context)
 

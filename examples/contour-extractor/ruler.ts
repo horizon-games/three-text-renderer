@@ -3,89 +3,127 @@ export enum RulerDirection {
   Vertical
 }
 
-export function drawRuler(
-  canvas: HTMLCanvasElement,
-  dir: RulerDirection,
-  max: number
-) {
-  const context = canvas.getContext('2d')!
-  const { offsetWidth: width, offsetHeight: height } = canvas
-  const pixelRatio = window.devicePixelRatio
+export default class Ruler {
+  canvas: HTMLCanvasElement
+  context: CanvasRenderingContext2D
+  direction: RulerDirection
 
-  canvas.width = width * pixelRatio
-  canvas.height = height * pixelRatio
+  width: number = 0
+  height: number = 0
 
-  context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-  context.fillStyle = '#333'
-  context.strokeStyle = '#888'
-  context.fillRect(0, 0, width, height)
+  drawInterval: (offset: number, length: number) => void
+  drawLabel: (offset: number) => void
 
-  const drawLine = (offset: number, length: number) => {
-    context.beginPath()
+  constructor(selector: string, direction: RulerDirection) {
+    this.canvas = document.querySelector(selector) as HTMLCanvasElement
+    this.direction = direction
 
-    switch (dir) {
+    if (!this.canvas) {
+      throw new Error(
+        `Ruler: Could not find element with selector: ${selector}`
+      )
+    }
+
+    this.context = this.canvas.getContext('2d')!
+
+    this.drawInterval = (offset: number, length: number) => {
+      this.context.beginPath()
+
+      switch (this.direction) {
+        case RulerDirection.Horizontal:
+          this.context.moveTo(offset, this.height)
+          this.context.lineTo(offset, this.height - length)
+          break
+
+        case RulerDirection.Vertical:
+          this.context.moveTo(this.width, offset)
+          this.context.lineTo(this.width - length, offset)
+          break
+      }
+
+      this.context.stroke()
+      this.context.closePath()
+    }
+
+    this.drawLabel = (offset: number) => {
+      switch (this.direction) {
+        case RulerDirection.Horizontal:
+          this.context.fillText(String(offset), offset + 2, this.height - 7)
+          break
+
+        case RulerDirection.Vertical:
+          this.context.fillText(String(offset), 2, offset + 10)
+          break
+      }
+    }
+
+    const handleResize = () => {
+      const { offsetWidth: width, offsetHeight: height } = this.canvas
+      const pixelRatio = window.devicePixelRatio
+
+      this.width = width
+      this.height = height
+
+      this.canvas.width = width * pixelRatio
+      this.canvas.height = height * pixelRatio
+
+      this.context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    handleResize()
+  }
+
+  render(maxRange: number) {
+    this.context.fillStyle = '#333'
+    this.context.strokeStyle = '#888'
+    this.context.fillRect(0, 0, this.width, this.height)
+
+    // Draw intervals - 10 and 50px
+    for (
+      let i = 0,
+        len =
+          this.direction === RulerDirection.Horizontal
+            ? this.width
+            : this.height;
+      i < len;
+      i += 10
+    ) {
+      if (i % 50 === 0) {
+        this.drawInterval(i, len)
+      } else if (i % 10 === 0) {
+        this.drawInterval(i, 5)
+      }
+    }
+
+    // Draw labels
+    this.context.font = '8pt sans-serif'
+    this.context.fillStyle = '#ccc'
+
+    for (
+      let i = 0,
+        len =
+          this.direction === RulerDirection.Horizontal
+            ? this.width
+            : this.height;
+      i < len;
+      i += 50
+    ) {
+      this.drawLabel(i)
+    }
+
+    this.context.fillStyle = '#000'
+    this.context.globalAlpha = 0.5
+    switch (this.direction) {
       case RulerDirection.Horizontal:
-        context.moveTo(offset, height)
-        context.lineTo(offset, height - length)
+        this.context.fillRect(maxRange, 0, this.width - maxRange, this.height)
+
         break
 
       case RulerDirection.Vertical:
-        context.moveTo(width, offset)
-        context.lineTo(width - length, offset)
+        this.context.fillRect(0, maxRange, this.width, this.height - maxRange)
         break
     }
-
-    context.stroke()
-    context.closePath()
-  }
-
-  // Draw intervals - 10 and 50px
-  for (
-    let i = 0, len = dir === RulerDirection.Horizontal ? width : height;
-    i < len;
-    i += 10
-  ) {
-    if (i % 50 === 0) {
-      drawLine(i, len)
-    } else if (i % 10 === 0) {
-      drawLine(i, 5)
-    }
-  }
-
-  // Draw labels
-  context.font = '8pt sans-serif'
-  context.fillStyle = '#ccc'
-
-  const drawLabel = (offset: number) => {
-    switch (dir) {
-      case RulerDirection.Horizontal:
-        context.fillText(String(offset), offset + 2, height - 7)
-        break
-
-      case RulerDirection.Vertical:
-        context.fillText(String(offset), 2, offset + 10)
-        break
-    }
-  }
-
-  for (
-    let i = 0, len = dir === RulerDirection.Horizontal ? width : height;
-    i < len;
-    i += 50
-  ) {
-    drawLabel(i)
-  }
-
-  context.fillStyle = '#000'
-  context.globalAlpha = 0.5
-  switch (dir) {
-    case RulerDirection.Horizontal:
-      context.fillRect(max, 0, width - max, height)
-
-      break
-
-    case RulerDirection.Vertical:
-      context.fillRect(0, max, width, height - max)
-      break
   }
 }

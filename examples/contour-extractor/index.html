@@ -133,13 +133,18 @@
         background-color: white;
       }
 
+      canvas#viewport {
+        width: calc(100vw - 30px);
+        height: calc(100vh - 30px);
+      }
+
       .ruler {
         position: absolute;
         cursor: pointer;
       }
 
       .ruler-horizontal {
-        width: calc(100% - 30px);
+        width: calc(100vw - 30px);
         height: 30px;
         top: 0;
         right: 0;
@@ -147,8 +152,8 @@
 
       .ruler-vertical {
         width: 30px;
-        height: calc(100% - 30px);
-        bottom: 0;
+        height: calc(100vh - 30px);
+        top: 30px;
         left: 0;
       }
     </style>

@@ -16,6 +16,7 @@ export interface TextOptions {
   lang: Language
   direction: TextDirection
   maxWidth?: number
+  maxHeight?: number
   // color: Color | Gradient | string | number
   // align: 'left' | 'center' | 'right'
   // vAlign: 'top' | 'center' | 'bottom'
