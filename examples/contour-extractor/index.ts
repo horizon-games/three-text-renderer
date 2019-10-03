@@ -21,6 +21,25 @@ const initialText = 'Hello, World!\nNext line.'
 const canvas = document.querySelector('canvas#viewport') as HTMLCanvasElement
 const context = canvas.getContext('2d')!
 
+const rulerHorizontalCanvas = document.querySelector(
+  'canvas.ruler.ruler-horizontal'
+) as HTMLCanvasElement
+const rulerVerticalCanvas = document.querySelector(
+  'canvas.ruler.ruler-vertical'
+) as HTMLCanvasElement
+
+const input = {
+  text: document.querySelector('textarea#text')! as HTMLTextAreaElement,
+  font: document.querySelector('select#font')! as HTMLSelectElement,
+  fontSize: document.querySelector('input#font-size')! as HTMLInputElement,
+  lineHeight: document.querySelector('input#line-height')! as HTMLInputElement,
+  textDirection: document.querySelector(
+    'select#text-direction'
+  )! as HTMLSelectElement,
+  maxWidth: document.querySelector('input#max-width')! as HTMLInputElement,
+  maxHeight: document.querySelector('input#max-height')! as HTMLInputElement
+}
+
 async function main() {
   const textRenderer = new TextRenderer()
 
@@ -28,20 +47,6 @@ async function main() {
   textRenderer.addFont('Barlow-Bold', BarlowBold)
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
   textRenderer.addFont('Amiri-Bold', AmiriBold)
-
-  const input = {
-    text: document.querySelector('textarea#text')! as HTMLTextAreaElement,
-    font: document.querySelector('select#font')! as HTMLSelectElement,
-    fontSize: document.querySelector('input#font-size')! as HTMLInputElement,
-    lineHeight: document.querySelector(
-      'input#line-height'
-    )! as HTMLInputElement,
-    textDirection: document.querySelector(
-      'select#text-direction'
-    )! as HTMLSelectElement,
-    maxWidth: document.querySelector('input#max-width')! as HTMLInputElement,
-    maxHeight: document.querySelector('input#max-height')! as HTMLInputElement
-  }
 
   input.text.value = initialText
 
@@ -64,6 +69,18 @@ async function main() {
     input[key].addEventListener('change', update)
   })
   input.text.addEventListener('keyup', update)
+
+  rulerHorizontalCanvas.addEventListener('click', ev => {
+    input.maxWidth.value = String((ev as any).layerX)
+
+    update()
+  })
+
+  rulerVerticalCanvas.addEventListener('click', ev => {
+    input.maxHeight.value = String((ev as any).layerY)
+
+    update()
+  })
 
   let lines: opentype.Path[][] = []
   let fontSize: number
@@ -111,12 +128,8 @@ async function main() {
   handleResize()
 
   function render() {
-    drawRuler(
-      'canvas.ruler.ruler-horizontal',
-      RulerDirection.Horizontal,
-      maxWidth
-    )
-    drawRuler('canvas.ruler.ruler-vertical', RulerDirection.Vertical, maxHeight)
+    drawRuler(rulerHorizontalCanvas, RulerDirection.Horizontal, maxWidth)
+    drawRuler(rulerVerticalCanvas, RulerDirection.Vertical, maxHeight)
 
     context.restore()
     context.save()

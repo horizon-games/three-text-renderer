@@ -3,8 +3,11 @@ export enum RulerDirection {
   Vertical
 }
 
-export function drawRuler(selector: string, dir: RulerDirection, max: number) {
-  const canvas = document.querySelector(selector) as HTMLCanvasElement
+export function drawRuler(
+  canvas: HTMLCanvasElement,
+  dir: RulerDirection,
+  max: number
+) {
   const context = canvas.getContext('2d')!
   const { offsetWidth: width, offsetHeight: height } = canvas
   const pixelRatio = window.devicePixelRatio
