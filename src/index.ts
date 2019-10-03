@@ -1,25 +1,21 @@
-import * as opentype from 'opentype.js'
+import { Path, Glyph } from 'opentype.js'
 import { BufferAttribute, BufferGeometry, Texture } from 'three'
 
-import Font from './Font'
-import { getTextShaping } from './lib/raqm'
+import FontLoader from './FontLoader'
+import { getTextShaping, Shaping } from './lib/raqm'
 import { TextOptions } from './TextOptions'
 
 interface GlyphShaping {
-  glyph: opentype.Glyph
-  shaping: {
-    glyphId: number
-    xAdvance: number
-    yAdvance: number
-    xOffset: number
-    yOffset: number
-  }
+  glyph: Glyph
+  shaping: Shaping
 }
+
+export type Line = GlyphShaping[]
 
 interface TextRendererOptions {}
 
 class TextRenderer {
-  fonts: Map<string, Font> = new Map()
+  fonts: Map<string, FontLoader> = new Map()
   texture: Texture
   options: TextRendererOptions = {}
   raqm: WebAssembly.WebAssemblyInstantiatedSource | undefined
@@ -31,29 +27,95 @@ class TextRenderer {
   }
 
   addFont(key: string, path: string) {
-    this.fonts.set(key, new Font(key, path))
+    this.fonts.set(key, new FontLoader(key, path))
   }
 
   removeFont(key: string) {
     this.fonts.delete(key)
   }
 
-  async createTextGeometry(text: string, options: TextOptions) {
-    if (!options.fontFace || !this.fonts.has(options.fontFace)) {
-      throw new Error(
-        `TextRenderer: Font face ${options.fontFace} is not added.`
-      )
+  getFont(key: string): FontLoader {
+    if (!this.fonts.has(key)) {
+      throw new Error(`TextRenderer: Does not contain font by ${key}`)
     }
 
-    const fontFace = this.fonts.get(options.fontFace)!
+    return this.fonts.get(key)!
+  }
 
-    const { font } = await fontFace.use()
+  // Triggers the load of the font
+  async useFont(key: string) {
+    return this.getFont(key).use()
+  }
+
+  async getTextShaping(
+    text: string,
+    options: TextOptions
+  ): Promise<Shaping[][]> {
+    const fontLoader = this.getFont(options.fontFace)
+    const { blob } = await fontLoader.use()
+    const textLines = splitLines(text)
+
+    return textLines.reduce<Shaping[][]>((acc, text) => {
+      acc.push(getTextShaping(text, blob, options.lang, options.direction))
+
+      return acc
+    }, [])
+  }
+
+  async getTextContours(text: string, options: TextOptions): Promise<Path[][]> {
+    const fontLoader = this.getFont(options.fontFace)
+    const { font } = await fontLoader.use()
+    const { glyphs } = font
+    const textShapingLines = await this.getTextShaping(text, options)
+
+    const glyphShapingLines = textShapingLines.map(textShaping => {
+      return textShaping.map(x => ({
+        glyph: glyphs.get(x.glyphId),
+        shaping: x
+      }))
+    })
+
+    this._formatLines(glyphShapingLines, options)
+
+    return glyphShapingLines.reduce<Path[][]>((acc, glyphShaping) => {
+      let x = 0
+      let y = 0
+      const fontSize = options.fontSize || 72
+      const fontScale = (1 / font.unitsPerEm) * fontSize
+      const paths: Path[] = []
+
+      glyphShaping.forEach(({ glyph, shaping }) => {
+        const glyphPath = glyph.getPath(
+          x + shaping.xOffset * fontScale,
+          y + shaping.yOffset * fontScale,
+          fontSize,
+          {},
+          font
+        )
+        paths.push(glyphPath)
+
+        if (shaping.xAdvance) {
+          x += shaping.xAdvance * fontScale
+        }
+
+        if (shaping.yAdvance) {
+          y += shaping.yAdvance * fontScale
+        }
+      })
+
+      acc.push(paths)
+
+      return acc
+    }, [])
+  }
+
+  async createTextGeometry(text: string, options: TextOptions) {
+    const fontLoader = this.getFont(options.fontFace)
+    const { font } = await fontLoader.use()
     const { ascender, unitsPerEm } = font
     const fontSize = options.fontSize || 72
     const fontScale = (1 / unitsPerEm) * fontSize
     const lineHeight = ascender * fontScale
-
-    console.log('lineHeight', lineHeight)
     const lines = await this.getTextContours(text, options)
     const geometry = new BufferGeometry()
     const vertices: number[] = []
@@ -95,11 +157,6 @@ class TextRenderer {
       yOffset += lineHeight
     })
 
-    console.log('currIndx', currIdx)
-
-    console.log(vertices)
-    console.log(indices)
-
     geometry.addAttribute(
       'position',
       new BufferAttribute(new Float32Array(vertices), 3)
@@ -113,73 +170,60 @@ class TextRenderer {
     return geometry
   }
 
-  async getTextContours(
-    text: string,
-    options: TextOptions
-  ): Promise<opentype.Path[][]> {
-    if (!options.fontFace || !this.fonts.has(options.fontFace)) {
-      throw new Error(
-        `TextRenderer: Font face ${options.fontFace} is not added.`
-      )
+  private _formatLines(lines: Line[], options: TextOptions) {
+    const { font } = this.getFont(options.fontFace)
+    const fontSize = options.fontSize
+    const fontScale = (1 / font.unitsPerEm) * fontSize
+    const { maxWidth, maxHeight } = options
+
+    if (maxWidth || maxHeight) {
+      let lineIdx = 0
+
+      while (lineIdx < lines.length) {
+        const line = lines[lineIdx]
+        const breakPoints = []
+        let x = 0
+        let y = 0
+
+        if (line.length > 1) {
+          for (let glyphIdx = 0; glyphIdx < line.length; glyphIdx++) {
+            const { shaping } = line[glyphIdx]
+            if (shaping.symbol === ' ') {
+              breakPoints.push(glyphIdx)
+            }
+
+            if (shaping.xAdvance) {
+              x += shaping.xAdvance * fontScale
+
+              if (maxWidth && x > maxWidth) {
+                const breakPoint = breakPoints.length
+                  ? breakPoints.pop()! + 1
+                  : glyphIdx
+
+                if (breakPoint > 0) {
+                  const nextLine = line.splice(
+                    breakPoint,
+                    line.length - breakPoint
+                  )
+                  lines.splice(lineIdx + 1, 0, nextLine)
+                  break
+                }
+              }
+            }
+
+            if (shaping.yAdvance) {
+              y += shaping.yAdvance * fontScale
+
+              if (maxHeight && y > maxHeight) {
+                // TODO handle TTB direction and max height wrapping
+              }
+            }
+          }
+        }
+
+        lineIdx++
+      }
     }
-
-    const fontFace = this.fonts.get(options.fontFace)!
-
-    const { blob, font } = await fontFace.use()
-    const { glyphs } = font
-
-    const textLines = splitLines(text)
-    console.log('lines:', textLines)
-
-    return textLines.reduce<opentype.Path[][]>((acc, text) => {
-      const shapingData = getTextShaping(
-        text,
-        blob,
-        options.lang,
-        options.direction
-      )
-
-      console.log('shaping:', shapingData)
-
-      const textGlyphs = shapingData.reduce<GlyphShaping[]>((acc, x) => {
-        acc.push({ glyph: glyphs.get(x.glyphId), shaping: x })
-        return acc
-      }, [])
-
-      console.log(textGlyphs.map(x => x.glyph.name).join(''))
-
-      let x = 0
-      let y = 0
-      const fontSize = options.fontSize || 72
-      const fontScale = (1 / font.unitsPerEm) * fontSize
-      const paths: opentype.Path[] = []
-      textGlyphs.forEach(({ glyph, shaping }) => {
-        const glyphPath = glyph.getPath(
-          x + shaping.xOffset * fontScale,
-          y + shaping.yOffset * fontScale,
-          fontSize,
-          {},
-          font
-        )
-        paths.push(glyphPath)
-
-        if (shaping.xAdvance) {
-          x += shaping.xAdvance * fontScale
-        }
-
-        if (shaping.yAdvance) {
-          y += shaping.yAdvance * fontScale
-        }
-      })
-
-      acc.push(paths)
-
-      return acc
-    }, [])
-  }
-
-  format(lines: any) {
-    // Return formatted glyphs by line
   }
 }
 

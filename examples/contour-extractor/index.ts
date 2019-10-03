@@ -7,7 +7,7 @@ import BarlowBold from '../fonts/Barlow-Bold.ttf'
 import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
 import AmiriBold from '../fonts/Amiri-Bold.ttf'
 
-import * as opentype from 'opentype.js'
+import { Path, BoundingBox } from 'opentype.js'
 import { TextDirection } from '../../src/TextOptions'
 
 import Ruler, { RulerDirection } from './ruler'
@@ -87,7 +87,7 @@ async function main() {
     update()
   })
 
-  let lines: opentype.Path[][] = []
+  let lines: Path[][] = []
   let fontSize: number
   let fontScale: number
   let lineHeight: number
@@ -167,18 +167,18 @@ async function main() {
 
     lines.forEach(paths => {
       const boundingBoxes = paths.map(path => path.getBoundingBox())
-      const mergedPath = paths.reduce<opentype.Path>((acc, path) => {
+      const mergedPath = paths.reduce<Path>((acc, path) => {
         acc.extend(path)
         return acc
-      }, new opentype.Path())
+      }, new Path())
 
       renderLine(mergedPath, boundingBoxes, lineHeight)
     })
   }
 
   function renderLine(
-    path: opentype.Path,
-    boundingBoxes: opentype.BoundingBox[],
+    path: Path,
+    boundingBoxes: BoundingBox[],
     lineHeight: number
   ) {
     context.translate(0, lineHeight)

@@ -1,5 +1,16 @@
 import raqm from './raqm.wasm'
 
+export interface Shaping {
+  symbol: string
+  glyphId: number
+  xAdvance: number
+  yAdvance: number
+  xOffset: number
+  yOffset: number
+  cluster: number
+  fontIndex: number
+}
+
 enum HB_MEMORY_MODE {
   HB_MEMORY_MODE_DUPLICATE,
   HB_MEMORY_MODE_READONLY,
@@ -27,8 +38,7 @@ const getTextShaping = (
   fontBlob: ArrayBuffer,
   lang: string,
   direction: number
-) => {
-  console.log('text:', text)
+): Shaping[] => {
   const fontBuffer = raqm.malloc(fontBlob.byteLength)
   heapu8.set(new Uint8Array(fontBlob), fontBuffer)
 
@@ -61,7 +71,6 @@ const getTextShaping = (
   const rq = raqm.raqm_create()
   const encodedText = utf8Encoder.encode(text)
   const encodedText_ptr = raqm.malloc(encodedText.byteLength)
-  console.log('encoded text:', encodedText)
   heapu8.set(encodedText, encodedText_ptr)
   raqm.raqm_set_text_utf8(rq, encodedText_ptr, encodedText.byteLength)
   raqm.free(encodedText_ptr)
@@ -82,16 +91,20 @@ const getTextShaping = (
   const count = heapu32[count_ptr / 4]
   raqm.free(count_ptr)
 
-  const result = []
+  const result: Shaping[] = []
   for (let i = 0; i < count; ++i) {
+    const ptrOffset = glyphs + i * 7
+    const cluster = heapu32[ptrOffset + 5]
+
     result.push({
-      glyphId: heapu32[glyphs + i * 7 + 0],
-      xAdvance: heapu32[glyphs + i * 7 + 1],
-      yAdvance: heapu32[glyphs + i * 7 + 2],
-      xOffset: heapi32[glyphs + i * 7 + 3],
-      yOffset: heapi32[glyphs + i * 7 + 4],
-      cl: heapu32[glyphs + i * 7 + 5],
-      fontIndex: fonts.indexOf(heapu32[glyphs + i * 7 + 6])
+      symbol: text[cluster],
+      glyphId: heapu32[ptrOffset + 0],
+      xAdvance: heapu32[ptrOffset + 1],
+      yAdvance: heapu32[ptrOffset + 2],
+      xOffset: heapi32[ptrOffset + 3],
+      yOffset: heapi32[ptrOffset + 4],
+      cluster,
+      fontIndex: fonts.indexOf(heapu32[ptrOffset + 6])
     })
   }
 
