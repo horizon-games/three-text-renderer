@@ -8,9 +8,9 @@ import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
 import AmiriBold from '../fonts/Amiri-Bold.ttf'
 
 import { Path, BoundingBox } from 'opentype.js'
-import { TextDirection, TextAlign } from '../../src/TextOptions'
 
-import Ruler, { RulerDirection } from './ruler'
+import Ruler, { RulerDirection } from './Ruler'
+import TextEditor from '../common/TextEditor'
 
 const canvas = document.querySelector('canvas#viewport') as HTMLCanvasElement
 const context = canvas.getContext('2d')!
@@ -23,35 +23,6 @@ const rulerVertical = new Ruler(
   RulerDirection.Vertical
 )
 
-const input = {
-  text: document.querySelector('textarea#text')! as HTMLTextAreaElement,
-  font: document.querySelector('select#font')! as HTMLSelectElement,
-  fontSize: document.querySelector('input#font-size')! as HTMLInputElement,
-  lineHeight: document.querySelector('input#line-height')! as HTMLInputElement,
-  textDirection: document.querySelector(
-    'select#text-direction'
-  )! as HTMLSelectElement,
-  textAlign: document.querySelector('select#text-align')! as HTMLSelectElement,
-  letterSpacing: document.querySelector(
-    'input#letter-spacing'
-  )! as HTMLInputElement,
-  maxWidth: document.querySelector('input#max-width')! as HTMLInputElement,
-  maxHeight: document.querySelector('input#max-height')! as HTMLInputElement
-}
-
-const inputDefaults: { [key: string]: string } = {
-  // text: 'This != tést!',
-  // text: 'مرحبا يا عالم',
-  // text: 'مممممم',
-  // text: 'مرحبا',
-  text: 'Hello, World!\nNext line.',
-  fontSize: String(72),
-  lineHeight: String(1.2),
-  letterSpacing: String(0),
-  maxWidth: String(Math.floor(window.innerWidth / 100) * 100),
-  maxHeight: String(400)
-}
-
 async function main() {
   const textRenderer = new TextRenderer()
 
@@ -60,67 +31,41 @@ async function main() {
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
   textRenderer.addFont('Amiri-Bold', AmiriBold)
 
-  for (const [key, font] of textRenderer.fonts) {
-    input.font.options.add(new Option(key, font.key))
-  }
-
-  input.textDirection.options.add(new Option('LTR', String(TextDirection.LTR)))
-  input.textDirection.options.add(new Option('RTL', String(TextDirection.RTL)))
-  input.textDirection.options.add(new Option('TTB', String(TextDirection.TTB)))
-
-  input.textAlign.options.add(new Option('Left', String(TextAlign.Left)))
-  input.textAlign.options.add(new Option('Right', String(TextAlign.Right)))
-  input.textAlign.options.add(new Option('Center', String(TextAlign.Center)))
-
-  const inputKeys = Object.keys(input) as Array<keyof typeof input>
-
-  inputKeys.forEach(key => {
-    input[key].addEventListener('change', update)
-
-    if (key in inputDefaults) {
-      input[key].value = String(inputDefaults[key])
-    }
-  })
-
-  input.text.addEventListener('keyup', update)
+  const textEditor = new TextEditor(textRenderer)
+  textEditor.onUpdate(update)
 
   rulerHorizontal.canvas.addEventListener('click', ev => {
-    input.maxWidth.value = String((ev as any).layerX)
+    textEditor.maxWidth = (ev as any).layerX
 
     update()
   })
 
   rulerVertical.canvas.addEventListener('click', ev => {
-    input.maxHeight.value = String((ev as any).layerY)
+    textEditor.maxHeight = (ev as any).layerY
 
     update()
   })
 
   let lines: Path[][] = []
-  let fontSize: number
   let fontScale: number
   let lineHeight: number
-  let maxWidth: number
-  let maxHeight: number
 
   async function update() {
-    const { font } = await textRenderer.fonts.get(input.font.value)!.use()
+    const { font } = await textRenderer.useFont(textEditor.font)
     const { ascender, unitsPerEm } = font
 
-    fontSize = Number(input.fontSize.value) || 1
-    fontScale = (1 / unitsPerEm) * fontSize
-    lineHeight = (Number(input.lineHeight.value) || 1) * fontScale * ascender
-    maxWidth = Number(input.maxWidth.value)
-    maxHeight = Number(input.maxHeight.value)
-    lines = await textRenderer.getTextContours(input.text.value, {
-      fontFace: input.font.value,
-      fontSize: Number(input.fontSize.value),
+    fontScale = (1 / unitsPerEm) * textEditor.fontSize
+    lineHeight = (textEditor.lineHeight || 1) * fontScale * ascender
+
+    lines = await textRenderer.getTextContours(textEditor.text, {
+      fontFace: textEditor.font,
+      fontSize: textEditor.fontSize,
       lang: 'en',
-      direction: Number(input.textDirection.value),
-      align: input.textAlign.value as TextAlign,
-      letterSpacing: Number(input.letterSpacing.value),
-      maxWidth,
-      maxHeight
+      direction: textEditor.textDirection,
+      align: textEditor.textAlign,
+      letterSpacing: textEditor.letterSpacing,
+      maxWidth: textEditor.maxWidth,
+      maxHeight: textEditor.maxHeight
     })
 
     render()
@@ -144,6 +89,8 @@ async function main() {
   handleResize()
 
   function render() {
+    const { maxWidth, maxHeight } = textEditor
+
     rulerHorizontal.render(maxWidth)
     rulerVertical.render(maxHeight)
 
