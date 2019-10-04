@@ -66,4 +66,4 @@ async createTextGeometry(text: string, options: TextOptions)
 # Thanks
 
 - Behdad Esfahbod http://harfbuzz.org/
-- Ebrahim Byagowi
+- Ebrahim Byagowi http://harfbuzz.org/
