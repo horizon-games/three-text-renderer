@@ -27,7 +27,7 @@ const rulerVertical = new Ruler(
   RulerDirection.Vertical
 )
 
-const showAtlasPreview = false
+const showAtlasPreview = true
 
 const checkboxAnimate = document.querySelector(
   'input#animate'
