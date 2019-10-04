@@ -1,17 +1,17 @@
-import { Path, Glyph } from 'opentype.js'
+import { Glyph, Path } from 'opentype.js'
 import { BufferAttribute, BufferGeometry, Texture } from 'three'
 
 import FontLoader from './FontLoader'
 import { getTextShaping, Shaping } from './lib/raqm'
-import { TextOptions, TextAlign } from './TextOptions'
+import { TextAlign, TextOptions } from './TextOptions'
 
-interface GlyphShaping {
+interface ShapedGlyph {
   glyph: Glyph
   shaping: Shaping
 }
 
 export interface Line {
-  glyphs: GlyphShaping[]
+  glyphs: ShapedGlyph[]
   width: number
   height: number
 }
@@ -54,19 +54,16 @@ class TextRenderer {
     return this.getFont(key).use()
   }
 
-  async getTextShaping(
-    text: string,
-    options: TextOptions
-  ): Promise<Shaping[][]> {
+  async getShapedGlyphs(text: string, options: TextOptions): Promise<Line[]> {
     const {
       blob,
-      font: { unitsPerEm }
+      font: { glyphs, unitsPerEm }
     } = await this.useFont(options.fontFace)
     const textLines = splitLines(text)
     const { letterSpacing } = options
 
     return textLines.map(text => {
-      const shaping = getTextShaping(
+      const textShaping = getTextShaping(
         text,
         blob,
         options.lang,
@@ -75,20 +72,11 @@ class TextRenderer {
 
       if (letterSpacing) {
         // Apply letter spacing to xAdvance - is this the best place for this?
-        shaping.forEach(glyph => {
+        textShaping.forEach(glyph => {
           glyph.xAdvance += letterSpacing * unitsPerEm
         })
       }
 
-      return shaping
-    })
-  }
-
-  async getTextContours(text: string, options: TextOptions): Promise<Path[][]> {
-    const { font } = await this.useFont(options.fontFace)
-    const { glyphs } = font
-    const textShapingLines = await this.getTextShaping(text, options)
-    const lines: Line[] = textShapingLines.map(textShaping => {
       return {
         glyphs: textShaping.map(x => ({
           glyph: glyphs.get(x.glyphId),
@@ -98,6 +86,11 @@ class TextRenderer {
         height: 0
       }
     })
+  }
+
+  async getTextContours(text: string, options: TextOptions): Promise<Path[][]> {
+    const { font } = await this.useFont(options.fontFace)
+    const lines: Line[] = await this.getShapedGlyphs(text, options)
 
     this._formatLines(lines, options)
 
@@ -157,7 +150,6 @@ class TextRenderer {
   }
 
   async createTextGeometry(text: string, options: TextOptions) {
-    const lines = await this.getTextContours(text, options)
     const { font } = await this.useFont(options.fontFace)
     const { ascender, unitsPerEm } = font
     const fontSize = options.fontSize || 72
@@ -166,6 +158,12 @@ class TextRenderer {
     const geometry = new BufferGeometry()
     const vertices: number[] = []
     const indices: number[] = []
+
+    const lines = await this.getTextContours(text, options)
+
+    /// -------------------------------------------------------------
+    // XXX: Hey Tom, this is where you can process these glyph lines.
+    // --------------------------------------------------------------
 
     let currIdx = 0
     const xOffset = 0
