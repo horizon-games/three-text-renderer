@@ -125,5 +125,6 @@ export default class Ruler {
         this.context.fillRect(0, maxRange, this.width, this.height - maxRange)
         break
     }
+    this.context.globalAlpha = 1
   }
 }

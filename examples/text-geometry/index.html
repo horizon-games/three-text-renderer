@@ -18,6 +18,7 @@
       }
 
       .canvas-container-inner {
+        position: relative;
         overflow: hidden;
         background-color: white;
       }
@@ -44,6 +45,20 @@
         height: calc(100vh - 30px);
         top: 30px;
         left: 0;
+      }
+
+      .options {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.8);
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+
+        right: 0;
+        top: 0;
+        padding: 15px;
+        margin: 30px;
+        color: white;
+        font-size: 1.5rem;
       }
     </style>
   </head>
@@ -170,6 +185,10 @@
         <canvas class="ruler ruler-horizontal"></canvas>
         <canvas class="ruler ruler-vertical"></canvas>
         <div class="canvas-container-inner">
+          <div class="options">
+            <input type="checkbox" id="animate" checked="checked" />
+            <label for="animate">Animate</label>
+          </div>
           <canvas id="viewport"></canvas>
         </div>
       </div>

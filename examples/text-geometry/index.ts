@@ -2,7 +2,6 @@ import TextRenderer from '../../src/index'
 import BarlowBold from '../fonts/Barlow-Bold.ttf'
 import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
 
-import { TextDirection, TextOptions } from '../../src/TextOptions'
 import {
   Scene,
   OrthographicCamera,
@@ -10,8 +9,6 @@ import {
   WebGLRenderer,
   MeshBasicMaterial,
   DoubleSide,
-  Box3Helper,
-  Color,
   Vector3,
   PlaneBufferGeometry
 } from 'three'
@@ -27,6 +24,10 @@ const rulerVertical = new Ruler(
   'canvas.ruler.ruler-vertical',
   RulerDirection.Vertical
 )
+
+const checkboxAnimate = document.querySelector(
+  'input#animate'
+)! as HTMLInputElement
 
 async function main() {
   const textRenderer = new TextRenderer()
@@ -112,7 +113,6 @@ async function main() {
 
     scene.add(mesh)
 
-    const { boundingBox } = geometry
     const boundingMesh = new Mesh(
       new PlaneBufferGeometry(maxWidth, maxHeight),
       new MeshBasicMaterial({
@@ -122,11 +122,12 @@ async function main() {
     )
     boundingMesh.position.z -= 0.1
     mesh.add(boundingMesh)
-    //const box = new Box3Helper(boundingBox, new Color(0x0000ff))
-    //mesh.add(box)
 
-    const width = Math.abs(boundingBox.min.x - boundingBox.max.x)
+    //const { boundingBox } = geometry
+    //const box = new Box3Helper(boundingBox, new Color(0x0000ff))
+    //const width = Math.abs(boundingBox.min.x - boundingBox.max.x)
     //const height = Math.abs(boundingBox.min.y - boundingBox.max.y)
+    //mesh.add(box)
 
     geometry.translate(-maxWidth / 2, -maxHeight / 2 + textEditor.fontSize, 0)
 
@@ -147,7 +148,12 @@ async function main() {
       rotation.y = Math.sin(frameCount / 100) / 2
       rotation.x = Math.sin(frameCount / 400) / 2
 
-      mesh.rotation.setFromVector3(rotation)
+      if (checkboxAnimate.checked) {
+        mesh.rotation.setFromVector3(rotation)
+      } else {
+        frameCount = 0
+        mesh.rotation.set(0, 0, 0)
+      }
     }
 
     renderer.render(scene, camera)

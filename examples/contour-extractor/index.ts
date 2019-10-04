@@ -1,4 +1,4 @@
-import TextRenderer from '../../src/index'
+import TextRenderer, { Line } from '../../src/index'
 
 import BarlowBold from '../fonts/Barlow-Bold.ttf'
 //import fontPath from '../fonts/FiraCode-Bold.otf'
@@ -46,7 +46,7 @@ async function main() {
     update()
   })
 
-  let lines: Path[][] = []
+  let lines: Line[] = []
   let fontScale: number
   let lineHeight: number
 
@@ -124,15 +124,16 @@ async function main() {
       context.closePath()
     }
 
-    lines.forEach(paths => {
-      const boundingBoxes = paths.map(path => path.getBoundingBox())
-      const mergedPath = paths.reduce<Path>((acc, path) => {
-        acc.extend(path)
-        return acc
-      }, new Path())
+    // XXX Need a different way to do this
+    // lines.forEach(line => {
+    //   const boundingBoxes = line.glyphs.map(({ path }) => path!.getBoundingBox())
+    //   const mergedPath = line.paths.reduce<Path>((acc, path) => {
+    //     acc.extend(path)
+    //     return acc
+    //   }, new Path())
 
-      renderLine(mergedPath, boundingBoxes, lineHeight)
-    })
+    //   renderLine(mergedPath, boundingBoxes, lineHeight)
+    // })
   }
 
   function renderLine(

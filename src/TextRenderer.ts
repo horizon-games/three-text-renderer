@@ -12,9 +12,10 @@ import FontLoader from './FontLoader'
 import { getTextShaping, Shaping } from './lib/raqm'
 import { TextAlign, TextOptions } from './TextOptions'
 
-interface ShapedGlyph {
+export interface ShapedGlyph {
   glyph: Glyph
   shaping: Shaping
+  path: Path | undefined
 }
 
 export interface Line {
@@ -23,7 +24,9 @@ export interface Line {
   height: number
 }
 
-interface TextRendererOptions {}
+interface TextRendererOptions {
+  //
+}
 
 const BREAK_POINT_SYMBOLS = [' ', ',']
 const WHITE_SPACE = [' ']
@@ -73,10 +76,9 @@ class TextRenderer {
   async getShapedGlyphs(text: string, options: TextOptions): Promise<Line[]> {
     const {
       blob,
-      font: { glyphs, unitsPerEm }
+      font: { glyphs }
     } = await this.useFont(options.fontFace)
     const textLines = splitLines(text)
-    const { letterSpacing } = options
 
     return textLines.map(text => {
       const textShaping = getTextShaping(
@@ -86,17 +88,11 @@ class TextRenderer {
         options.direction
       )
 
-      if (letterSpacing) {
-        // Apply letter spacing to xAdvance - is this the best place for this?
-        textShaping.forEach(glyph => {
-          glyph.xAdvance += letterSpacing * unitsPerEm
-        })
-      }
-
       return {
         glyphs: textShaping.map(x => ({
           glyph: glyphs.get(x.glyphId),
-          shaping: x
+          shaping: x,
+          path: undefined
         })),
         width: 0,
         height: 0
@@ -104,71 +100,28 @@ class TextRenderer {
     })
   }
 
-  async getTextContours(text: string, options: TextOptions): Promise<Path[][]> {
+  async getTextContours(text: string, options: TextOptions): Promise<Line[]> {
     const { font } = await this.useFont(options.fontFace)
     const lines: Line[] = await this.getShapedGlyphs(text, options)
 
     this._formatLines(lines, options)
 
-    const maxLineWidth = lines.reduce((acc, line) => {
-      return Math.max(acc, line.width)
-    }, 0)
+    // Add Path contours to lines
+    lines.forEach(line => {
+      const fontSize = options.fontSize
 
-    return lines.reduce<Path[][]>((acc, line) => {
-      let x = 0
-      let y = 0
-      const fontSize = options.fontSize || 72
-      const fontScale = (1 / font.unitsPerEm) * fontSize
-      const paths: Path[] = []
-
-      const alignXOffset = (function() {
-        switch (options.align) {
-          case TextAlign.Right:
-            return options.maxWidth
-              ? options.maxWidth - line.width
-              : maxLineWidth - line.width
-
-          case TextAlign.Center:
-            return options.maxWidth
-              ? options.maxWidth / 2 - line.width / 2
-              : maxLineWidth / 2 - line.width / 2
-
-          case TextAlign.Left:
-            return 0
-        }
-
-        return 0
-      })()
-
-      line.glyphs.forEach(({ glyph, shaping }) => {
-        const glyphPath = glyph.getPath(
-          x + shaping.xOffset * fontScale + alignXOffset,
-          y + shaping.yOffset * fontScale,
-          fontSize,
-          {},
-          font
-        )
-        paths.push(glyphPath)
-
-        if (shaping.xAdvance) {
-          x += shaping.xAdvance * fontScale
-        }
-
-        if (shaping.yAdvance) {
-          y += shaping.yAdvance * fontScale
-        }
+      line.glyphs.forEach(shapedGlyph => {
+        shapedGlyph.path = shapedGlyph.glyph.getPath(0, 0, fontSize, {}, font)
       })
+    })
 
-      acc.push(paths)
-
-      return acc
-    }, [])
+    return lines
   }
 
   async createTextGeometry(text: string, options: TextOptions) {
     const { font } = await this.useFont(options.fontFace)
     const { ascender, unitsPerEm } = font
-    const fontSize = options.fontSize || 72
+    const { fontSize, letterSpacing, maxWidth, align } = options
     const fontScale = (1 / unitsPerEm) * fontSize
     const lineHeight = ascender * fontScale
     const geometry = new BufferGeometry()
@@ -181,40 +134,73 @@ class TextRenderer {
     // XXX: Hey Tom, this is where you can process these glyph lines.
     // --------------------------------------------------------------
 
-    let currIdx = 0
-    const xOffset = 0
-    let yOffset = 0
+    const maxLineWidth = lines.reduce((acc, line) => {
+      return Math.max(acc, line.width)
+    }, 0)
 
-    lines.forEach(paths => {
-      const boundingBoxes = paths.map(path => path.getBoundingBox())
+    let xAdvance = 0
+    let yAdvance = 0
+    let currIdx = 0
+
+    lines.forEach(line => {
+      const xAlignOffset = (function() {
+        switch (align) {
+          case TextAlign.Right:
+            return maxWidth ? maxWidth - line.width : maxLineWidth - line.width
+
+          case TextAlign.Center:
+            return maxWidth
+              ? maxWidth / 2 - line.width / 2
+              : maxLineWidth / 2 - line.width / 2
+
+          case TextAlign.Left:
+            return 0
+        }
+
+        return 0
+      })()
+
       const z = 0
 
-      boundingBoxes.forEach((bb, idx) => {
+      line.glyphs.forEach((shapedGlyph, idx) => {
+        const { shaping, path } = shapedGlyph
+        const bb = path!.getBoundingBox()
         const faceIdx = currIdx + idx * 4
+        const xOffset = shaping.xOffset * fontScale + xAlignOffset
+        const yOffset = shaping.yOffset * fontScale
 
         vertices.push(
-          bb.x1 + xOffset,
-          bb.y2 + yOffset,
+          bb.x1 + xAdvance + xOffset,
+          bb.y2 + yAdvance + yOffset,
           z,
-          bb.x1 + xOffset,
-          bb.y1 + yOffset,
+          bb.x1 + xAdvance + xOffset,
+          bb.y1 + yAdvance + yOffset,
           z,
-          bb.x2 + xOffset,
-          bb.y1 + yOffset,
+          bb.x2 + xAdvance + xOffset,
+          bb.y1 + yAdvance + yOffset,
           z,
-          bb.x2 + xOffset,
-          bb.y2 + yOffset,
+          bb.x2 + xAdvance + xOffset,
+          bb.y2 + yAdvance + yOffset,
           z
         )
 
         indices.push(faceIdx + 0, faceIdx + 1, faceIdx + 2)
         indices.push(faceIdx + 0, faceIdx + 2, faceIdx + 3)
+
+        xAdvance += shaping.xAdvance * fontScale
+
+        if (letterSpacing) {
+          xAdvance += letterSpacing * unitsPerEm * fontScale
+        }
+
+        yAdvance += shaping.yAdvance * fontScale
       })
 
-      currIdx += boundingBoxes.length * 4
+      currIdx += line.glyphs.length * 4
 
       // TODO support xOffsets for TTB direction
-      yOffset += lineHeight
+      xAdvance = 0
+      yAdvance += lineHeight
     })
 
     geometry.addAttribute(
@@ -222,9 +208,6 @@ class TextRenderer {
       new BufferAttribute(new Float32Array(vertices), 3)
     )
     geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
-
-    // TODO: Send linePaths for formatter
-
     geometry.computeBoundingBox()
 
     return geometry
@@ -232,11 +215,10 @@ class TextRenderer {
 
   private _formatLines(lines: Line[], options: TextOptions) {
     const { font } = this.getFont(options.fontFace)
-    const fontSize = options.fontSize
-    const fontScale = (1 / font.unitsPerEm) * fontSize
+    const { unitsPerEm } = font
+    const { fontSize, letterSpacing } = options
+    const fontScale = (1 / unitsPerEm) * fontSize
     const { maxWidth, maxHeight } = options
-
-    // TODO use letterSpacing property as well to calculate line widths
 
     if (maxWidth || maxHeight) {
       let lineIdx = 0
@@ -258,6 +240,11 @@ class TextRenderer {
               let breakPoint = { x, glyphIdx }
 
               x += shaping.xAdvance * fontScale
+
+              // Include letterSpacing in line-measurement
+              if (letterSpacing) {
+                x += letterSpacing * unitsPerEm * fontScale
+              }
 
               if (maxWidth && x > maxWidth) {
                 if (breakPoints.length) {
@@ -287,7 +274,6 @@ class TextRenderer {
                     height: 0
                   }
 
-                  line.width = breakPoint.x
                   lines.splice(lineIdx + 1, 0, nextLine)
                   break
                 }
@@ -312,13 +298,18 @@ class TextRenderer {
 
   private _getLineWidth(line: Line, options: TextOptions): number {
     const { font } = this.getFont(options.fontFace)
-    const fontSize = options.fontSize
+    const { unitsPerEm } = font
+    const { fontSize, letterSpacing } = options
     const fontScale = (1 / font.unitsPerEm) * fontSize
 
     return line.glyphs.reduce((acc, { shaping }) => {
-      if (shaping.xAdvance) {
-        acc += shaping.xAdvance * fontScale
+      acc += shaping.xAdvance * fontScale
+
+      // Include letterSpacing in line-measurement
+      if (letterSpacing) {
+        acc += letterSpacing * unitsPerEm * fontScale
       }
+
       return acc
     }, 0)
   }
