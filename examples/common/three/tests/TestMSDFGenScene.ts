@@ -57,7 +57,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
         if (i === segments - 1 && ci === 0) {
           ci++
         }
-        const curveMesh = new SDFCurveMesh('bezier', 16, 1)
+        const curveMesh = new SDFCurveMesh('bezier', 16, 1, 1)
         // const curveMesh = new SDFCurveMesh(16, colors[ci])
         const x = Math.cos(r) * scale
         const y = Math.sin(r) * scale
@@ -85,11 +85,12 @@ export default class TestMSDFGenScene extends BaseTestScene {
     }
     function makeTtfShape(
       ttfPath: TtfPathSegment[],
-      offset: Vector2,
+      padding:number,
+      windingOrder: 1 | -1,
       scale: number,
-      windingOrder: 1 | -1
+      offset: Vector2,
     ) {
-      for(const curveMesh of makeTtfShapeMeshes(ttfPath, 12, windingOrder, scale, offset)){
+      for(const curveMesh of makeTtfShapeMeshes(ttfPath, padding, windingOrder, scale, offset)){
         pivot.add(curveMesh)
         msdfKit.add(curveMesh)
         curves.push(curveMesh)
@@ -109,32 +110,34 @@ export default class TestMSDFGenScene extends BaseTestScene {
         }
       },
       () => {
-        makeTtfShape(testFontPathData1, new Vector2(340, 80), 0.02, 1)
+        makeTtfShape(testFontPathData1, 12, 1, 0.02, new Vector2(340, 80))
       },
       () => {
         for (const p of testFontPathData2) {
-          makeTtfShape(p.commands, new Vector2(440, 180), 0.02, -1)
+          makeTtfShape(p.commands, 12, -1, 0.02, new Vector2(440, 180))
         }
       },
       () => {
         for (const p of testFontPathData3) {
-          makeTtfShape(p.commands, new Vector2(40, 120), 0.02, 1)
+          makeTtfShape(p.commands, 12, 1, 0.02, new Vector2(40, 120))
         }
       },
       () => {
         makeTtfShape(
           testFontPathData3[9].commands,
-          new Vector2(140, 120),
+          12,
+          1,
           0.04,
-          1
+          new Vector2(140, 120)
         )
       },
       () => {
         makeTtfShape(
           testTtfPathData,
-          new Vector2(0, 0),
+          12,
+          1,
           0.02,
-          1
+          new Vector2(0, 0)
         )
       }
     ]
