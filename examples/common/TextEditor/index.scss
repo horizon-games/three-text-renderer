@@ -1,0 +1,67 @@
+.text-editor {
+  input,
+  select,
+  textarea {
+    border-radius: 5px;
+    background-color: white;
+    height: 42px;
+    line-height: 48px;
+    padding: 0 10px;
+    border: none;
+    font-size: 2.1rem;
+    transition: box-shadow 300ms, background-color 300ms;
+    color: inherit;
+    background-color: #fafafa;
+  }
+
+  textarea {
+    height: 96px;
+    width: 100%;
+    resize: none;
+    line-height: 1.2;
+    padding: 10px;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    box-shadow: 0.2rem 0.8rem 1.6rem #5e35b1;
+    background-color: white;
+  }
+
+  .font-options {
+    margin-bottom: 10px;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .font-option {
+    margin-right: 30px;
+    margin-bottom: 10px;
+  }
+
+  #text-direction,
+  #letter-spacing {
+    width: 96px;
+  }
+
+  #font-size,
+  #line-height {
+    width: 80px;
+  }
+
+  #max-width,
+  #max-height {
+    width: 96px;
+  }
+
+  label {
+    font-size: 1.7rem;
+    display: block;
+    color: white;
+    margin-bottom: 10px;
+    padding-left: 2px;
+    text-shadow: 0px 1px #4527a0;
+  }
+}
