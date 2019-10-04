@@ -1,15 +1,13 @@
 import {
-  CubicBezierCurve,
-  LineCurve,
   Mesh,
   MeshBasicMaterial,
   Object3D,
-  Path,
   ShapePath,
   Vector2,
   Vector3
 } from 'three'
-import { parseSVGPath } from '../../../../src/three/utils/svgHelpers'
+import { parseSVGPath, makeSvgShapeMeshes } from '../../../../src/three/utils/svgHelpers'
+import { makeTtfShapeMeshes } from '../../../../src/three/utils/ttfHelpers'
 import SDFCurveMesh from '../../../../src/three/meshes/SDFCurveMesh'
 import renderer from '../renderer'
 import { getSharedPlaneBufferGeometry } from '../../../../src/three/utils/geometry'
@@ -19,6 +17,9 @@ import {
   testFontPathData3,
   TtfPathSegment
 } from '../../testFontPathData'
+import {
+  testTtfPathData
+} from '../../testTtfPathData'
 import { testSvgPathData1, testSvgPathData2 } from '../../testSvgPathData'
 import { lerp, rand } from '../../../../src/utils/math'
 
@@ -76,39 +77,10 @@ export default class TestMSDFGenScene extends BaseTestScene {
     }
 
     function makeSvgShape(shape: ShapePath, offset: Vector2, scale: number) {
-      for (const subPath of shape.subPaths as Path[]) {
-        for (const curve of subPath.curves) {
-          let curveMesh: SDFCurveMesh | undefined
-          if (curve instanceof CubicBezierCurve) {
-            curveMesh = new SDFCurveMesh('bezier', 16, 1)
-            curveMesh.setAnchor1v(curve.v0)
-            curveMesh.setHandle1v(curve.v1)
-            curveMesh.setHandle2v(curve.v2)
-            curveMesh.setAnchor2v(curve.v3)
-          } else if (curve instanceof LineCurve) {
-            curveMesh = new SDFCurveMesh('linear', 2, 1)
-            curveMesh.setAnchor1v(curve.v1)
-            curveMesh.setHandle1(
-              lerp(curve.v1.x, curve.v2.x, 1 / 3),
-              lerp(curve.v1.y, curve.v2.y, 1 / 3)
-            )
-            curveMesh.setHandle2(
-              lerp(curve.v1.x, curve.v2.x, 2 / 3),
-              lerp(curve.v1.y, curve.v2.y, 2 / 3)
-            )
-            curveMesh.setAnchor2v(curve.v2)
-          } else {
-            debugger
-          }
-          if (curveMesh) {
-            pivot.add(curveMesh)
-            msdfKit.add(curveMesh)
-            curves.push(curveMesh)
-            curveMesh.transform(offset, scale)
-          } else {
-            debugger
-          }
-        }
+      for(const curveMesh of makeSvgShapeMeshes(shape, offset, scale)) {
+        pivot.add(curveMesh)
+        msdfKit.add(curveMesh)
+        curves.push(curveMesh)
       }
     }
     function makeTtfShape(
@@ -117,45 +89,10 @@ export default class TestMSDFGenScene extends BaseTestScene {
       scale: number,
       windingOrder: 1 | -1
     ) {
-      const cursor = new Vector2()
-      for (const seg of ttfPath) {
-        let curveMesh: SDFCurveMesh | undefined
-        switch (seg.type) {
-          case 'M':
-            cursor.set(seg.x!, seg.y!)
-            break
-          case 'C':
-            curveMesh = new SDFCurveMesh('bezier', 16, windingOrder)
-            curveMesh.setAnchor1v(cursor)
-            curveMesh.setHandle1(seg.x1!, seg.y1!)
-            curveMesh.setHandle2(seg.x2!, seg.y2!)
-            cursor.set(seg.x!, seg.y!)
-            curveMesh.setAnchor2v(cursor)
-            break
-          case 'Q':
-            curveMesh = new SDFCurveMesh('quadratic', 16, windingOrder)
-            curveMesh.setAnchor1v(cursor)
-            curveMesh.setHandle1(seg.x1!, seg.y1!)
-            cursor.set(seg.x!, seg.y!)
-            curveMesh.setAnchor2v(cursor)
-            break
-          case 'L':
-            curveMesh = new SDFCurveMesh('linear', 2, windingOrder)
-            curveMesh.setAnchor1v(cursor)
-            cursor.set(seg.x!, seg.y!)
-						curveMesh.setAnchor2v(cursor)
-						break
-          case 'Z':
-            break
-          default:
-            debugger
-        }
-        if (curveMesh) {
-          pivot.add(curveMesh)
-          msdfKit.add(curveMesh)
-          curves.push(curveMesh)
-          curveMesh.transform(offset, scale)
-        }
+      for(const curveMesh of makeTtfShapeMeshes(ttfPath, offset, scale, windingOrder)){
+        pivot.add(curveMesh)
+        msdfKit.add(curveMesh)
+        curves.push(curveMesh)
       }
     }
     const tests = [
@@ -191,6 +128,14 @@ export default class TestMSDFGenScene extends BaseTestScene {
           0.04,
           1
         )
+      },
+      () => {
+        makeTtfShape(
+          testTtfPathData,
+          new Vector2(0, 0),
+          0.02,
+          1
+        )
       }
     ]
 
@@ -215,7 +160,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
     setTimeout(() => {
       msdfKit.render(renderer)
       showPrev(msdfKit.getPreviewMeshChannels(), -0.08, 0, 0.04)
-      showPrev(msdfKit.getPreviewMesh(), 0.13, -0.05)
+      showPrev(msdfKit.getPreviewMeshMSDF(), 0.13, -0.05)
       showPrev(msdfKit.getPreviewMeshTestMSDF(), 0.08, 0.05, 0.1)
       // this.thrash = true
     }, 500)

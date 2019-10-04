@@ -1,4 +1,15 @@
-import { ShapePath, Vector2 } from 'three'
+import {
+  CubicBezierCurve,
+  LineCurve,
+  Mesh,
+  Object3D,
+  Path,
+  ShapePath,
+  Vector2
+} from 'three'
+
+import { lerp } from '../../utils/math'
+import SDFCurveMesh from '../meshes/SDFCurveMesh'
 
 /**
  * https://www.w3.org/TR/SVG/implnote.html#ArcImplementationNotes
@@ -506,4 +517,45 @@ export function parseSVGPath(d: string) {
   }
 
   return path
+}
+
+export function makeSvgShapeMeshes(
+  shape: ShapePath,
+  offset: Vector2,
+  scale: number
+) {
+  const meshes: SDFCurveMesh[] = []
+  for (const subPath of shape.subPaths as Path[]) {
+    for (const curve of subPath.curves) {
+      let curveMesh: SDFCurveMesh | undefined
+      if (curve instanceof CubicBezierCurve) {
+        curveMesh = new SDFCurveMesh('bezier', 16, 1)
+        curveMesh.setAnchor1v(curve.v0)
+        curveMesh.setHandle1v(curve.v1)
+        curveMesh.setHandle2v(curve.v2)
+        curveMesh.setAnchor2v(curve.v3)
+      } else if (curve instanceof LineCurve) {
+        curveMesh = new SDFCurveMesh('linear', 2, 1)
+        curveMesh.setAnchor1v(curve.v1)
+        curveMesh.setHandle1(
+          lerp(curve.v1.x, curve.v2.x, 1 / 3),
+          lerp(curve.v1.y, curve.v2.y, 1 / 3)
+        )
+        curveMesh.setHandle2(
+          lerp(curve.v1.x, curve.v2.x, 2 / 3),
+          lerp(curve.v1.y, curve.v2.y, 2 / 3)
+        )
+        curveMesh.setAnchor2v(curve.v2)
+      } else {
+        debugger
+      }
+      if (curveMesh) {
+        curveMesh.transform(offset, scale)
+        meshes.push(curveMesh)
+      } else {
+        debugger
+      }
+    }
+  }
+  return meshes
 }

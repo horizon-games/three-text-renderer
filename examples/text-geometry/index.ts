@@ -10,7 +10,8 @@ import {
   MeshBasicMaterial,
   DoubleSide,
   Vector3,
-  PlaneBufferGeometry
+  PlaneBufferGeometry,
+  SphereBufferGeometry
 } from 'three'
 import TextEditor from '../common/TextEditor'
 import Ruler, { RulerDirection } from '../common/Ruler'
@@ -24,6 +25,8 @@ const rulerVertical = new Ruler(
   'canvas.ruler.ruler-vertical',
   RulerDirection.Vertical
 )
+
+const showAtlasPreview = false
 
 const checkboxAnimate = document.querySelector(
   'input#animate'
@@ -56,6 +59,14 @@ async function main() {
   const camera = new OrthographicCamera(1, 1, 1, 1)
   camera.position.z = 5
   scene.add(camera)
+  if(showAtlasPreview) {
+    const prev = textRenderer.getPreviewMeshMSDF()
+    prev.add(new Mesh(new SphereBufferGeometry(0.5)))
+    prev.scale.multiplyScalar(200)
+    prev.position.set(100, 100, 400)
+    scene.add(prev)
+  }
+
 
   function handleResize() {
     const { innerWidth, innerHeight } = window
@@ -108,7 +119,8 @@ async function main() {
       geometry,
       new MeshBasicMaterial({
         color: 0xff0000,
-        side: DoubleSide
+        side: DoubleSide,
+        map: textRenderer.texture
       })
     )
 
@@ -156,6 +168,8 @@ async function main() {
         mesh.rotation.set(0, 0, 0)
       }
     }
+
+    textRenderer.render(renderer)
 
     renderer.render(scene, camera)
 

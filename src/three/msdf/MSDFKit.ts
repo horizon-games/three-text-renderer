@@ -37,11 +37,15 @@ export default class MSDFKit {
     this._combiner.render(renderer)
     renderer.setRenderTarget(null)
   }
-  getPreviewMesh() {
+  get texture() {
+    return this._combiner.finalTexture
+  }
+  getPreviewMeshMSDF() {
     const pm = new Mesh(
       getCachedUnitPlaneGeometry(),
       makeTexturePreviewMaterial(this._combiner.finalTexture)
     )
+    pm.renderOrder = 9999
     return pm
   }
   getPreviewMeshTestMSDF() {
