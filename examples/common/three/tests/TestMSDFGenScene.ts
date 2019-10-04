@@ -89,7 +89,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
       scale: number,
       windingOrder: 1 | -1
     ) {
-      for(const curveMesh of makeTtfShapeMeshes(ttfPath, offset, scale, windingOrder, 12 * scale)){
+      for(const curveMesh of makeTtfShapeMeshes(ttfPath, 12, windingOrder, scale, offset)){
         pivot.add(curveMesh)
         msdfKit.add(curveMesh)
         curves.push(curveMesh)

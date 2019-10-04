@@ -66,5 +66,5 @@ void main() {
   if(end > 0.0) {
     z *= 1.4;
   }
-  lineInfoTangentXYDistZ = vec3(tangent, z) * windingOrder * 0.5 + 0.5;
+  lineInfoTangentXYDistZ = vec3(tangent, ratioSign.y) * windingOrder * 0.5 + 0.5;
 }
