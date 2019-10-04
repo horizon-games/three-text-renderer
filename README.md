@@ -33,3 +33,32 @@ You can start the dev environment with:
 `yarn dev`
 
 This will direct you to a page with examples of different phases of the pipe line to check out.
+
+# API
+
+## TextRenderer
+
+```typescript
+
+import TextRenderer from 'three-text-renderer'
+
+const textRenderer = new TextRenderer()
+
+textRenderer.addFont('Roboto-Regular', 'https://fonts.gstatic.com/s/roboto/v20/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2')
+textRenderer.addFont('Roboto-Bold', 'https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmWUlfBBc4AMP6lQ.woff2')
+
+textRenderer.useFont('Roboto-Regular').then({ font }) => {
+  ...
+})
+
+```
+
+addFont(name: string, url: string)
+
+removeFont(name: string)
+
+getFont(name: string)
+
+async useFont(name: string)
+
+async createTextGeometry(text: string, options: TextOptions)
