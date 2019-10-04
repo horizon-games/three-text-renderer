@@ -2,6 +2,22 @@
 
 Three js realtime msdf text rendering pipeline that utilizes harfbuzz for text shaping.
 
+## Problem
+
+Rendering text in WebGL is hard.
+
+- You can take a niave aproach and render bitmap fonts but they dont scale well as you are locked to the bitmap resolution.
+- You can convert text to geometry and render but this is very expensive on CPU and GPU.
+- You can used a signed distance field but this will require pre processing of your glyphs into an atlas and complicated to maintain multiple fonts.
+
+And these solutions leave it up to you to come up with correct kerning and text shaping which you can do a fairly adequate job at with a niave approach for the latin character set but as soon as you move over to multilingual non-latin character sets you are faced with a monumental task that most would choose to ignore.
+
+### Enter Harfbuzz http://harfbuzz.org
+
+"HarfBuzz is a text shaping engine. It primarily supports OpenType, but also Apple Advanced Typography. HarfBuzz is used in Android, Chrome, ChromeOS, Firefox, GNOME, GTK+, KDE, LibreOffice, OpenJDK, PlayStation, Qt, XeTeX, and other places."
+
+.. and now available through a WASM binary!
+
 ## Goals
 
 This project aims to be a universal solution for rendering text in the context of three.js (it should be fairly trivial to expand the technique to other gl frameworks like babylon).
