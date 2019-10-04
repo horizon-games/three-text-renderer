@@ -19,7 +19,7 @@ export interface Line {
 }
 
 interface TextRendererOptions {
-  //
+  atlasSize: number
 }
 
 const BREAK_POINT_SYMBOLS = [' ', ',']
@@ -30,13 +30,15 @@ class TextRenderer {
     return this._atlas.texture
   }
   fonts: Map<string, FontLoader> = new Map()
-  options: TextRendererOptions = {}
-  raqm: WebAssembly.WebAssemblyInstantiatedSource | undefined
+  options: TextRendererOptions = {
+    atlasSize: 256
+  }
+
   private _atlas: MSDFAtlas
 
   constructor(options: Partial<TextRendererOptions> = {}) {
     Object.assign(this.options, options)
-    this._atlas = new MSDFAtlas(256)
+    this._atlas = new MSDFAtlas(options.atlasSize)
   }
 
   addFont(key: string, path: string) {
