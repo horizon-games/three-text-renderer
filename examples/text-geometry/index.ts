@@ -57,6 +57,7 @@ async function main() {
 
   const scene = new Scene()
   const renderer = new WebGLRenderer({ canvas })
+  renderer.setPixelRatio(window.devicePixelRatio)
   renderer.setClearColor(0xcccccc)
   const camera = new OrthographicCamera(1, 1, 1, 1)
   camera.position.z = 5
