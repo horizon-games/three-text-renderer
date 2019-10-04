@@ -3,16 +3,23 @@ import { BufferAttribute, BufferGeometry, Texture } from 'three'
 
 import FontLoader from './FontLoader'
 import { getTextShaping, Shaping } from './lib/raqm'
-import { TextOptions } from './TextOptions'
+import { TextOptions, TextAlign } from './TextOptions'
 
 interface GlyphShaping {
   glyph: Glyph
   shaping: Shaping
 }
 
-export type Line = GlyphShaping[]
+export interface Line {
+  glyphs: GlyphShaping[]
+  width: number
+  height: number
+}
 
 interface TextRendererOptions {}
+
+const BREAK_POINT_SYMBOLS = [' ', ',']
+const WHITE_SPACE = [' ']
 
 class TextRenderer {
   fonts: Map<string, FontLoader> = new Map()
@@ -81,25 +88,52 @@ class TextRenderer {
     const { font } = await this.useFont(options.fontFace)
     const { glyphs } = font
     const textShapingLines = await this.getTextShaping(text, options)
-    const lines = textShapingLines.map(textShaping => {
-      return textShaping.map(x => ({
-        glyph: glyphs.get(x.glyphId),
-        shaping: x
-      }))
+    const lines: Line[] = textShapingLines.map(textShaping => {
+      return {
+        glyphs: textShaping.map(x => ({
+          glyph: glyphs.get(x.glyphId),
+          shaping: x
+        })),
+        width: 0,
+        height: 0
+      }
     })
 
     this._formatLines(lines, options)
 
-    return lines.reduce<Path[][]>((acc, glyphShaping) => {
+    const maxLineWidth = lines.reduce((acc, line) => {
+      return Math.max(acc, line.width)
+    }, 0)
+
+    return lines.reduce<Path[][]>((acc, line) => {
       let x = 0
       let y = 0
       const fontSize = options.fontSize || 72
       const fontScale = (1 / font.unitsPerEm) * fontSize
       const paths: Path[] = []
 
-      glyphShaping.forEach(({ glyph, shaping }) => {
+      const alignXOffset = (function() {
+        switch (options.align) {
+          case TextAlign.Right:
+            return options.maxWidth
+              ? options.maxWidth - line.width
+              : maxLineWidth - line.width
+
+          case TextAlign.Center:
+            return options.maxWidth
+              ? options.maxWidth / 2 - line.width / 2
+              : maxLineWidth / 2 - line.width / 2
+
+          case TextAlign.Left:
+            return 0
+        }
+
+        return 0
+      })()
+
+      line.glyphs.forEach(({ glyph, shaping }) => {
         const glyphPath = glyph.getPath(
-          x + shaping.xOffset * fontScale,
+          x + shaping.xOffset * fontScale + alignXOffset,
           y + shaping.yOffset * fontScale,
           fontSize,
           {},
@@ -199,26 +233,47 @@ class TextRenderer {
         let x = 0
         let y = 0
 
-        if (line.length > 1) {
-          for (let glyphIdx = 0; glyphIdx < line.length; glyphIdx++) {
-            const { shaping } = line[glyphIdx]
-            if (shaping.symbol === ' ') {
-              breakPoints.push(glyphIdx)
+        if (line.glyphs.length > 1) {
+          for (let glyphIdx = 0; glyphIdx < line.glyphs.length; glyphIdx++) {
+            const { shaping } = line.glyphs[glyphIdx]
+            if (BREAK_POINT_SYMBOLS.includes(shaping.symbol)) {
+              breakPoints.push({ x, glyphIdx })
             }
 
             if (shaping.xAdvance) {
+              let breakPoint = { x, glyphIdx }
+
               x += shaping.xAdvance * fontScale
 
               if (maxWidth && x > maxWidth) {
-                const breakPoint = breakPoints.length
-                  ? breakPoints.pop()! + 1
-                  : glyphIdx
+                if (breakPoints.length) {
+                  breakPoint = breakPoints.pop()!
+                  const breakPointGlyph = line.glyphs[breakPoint.glyphIdx]
 
-                if (breakPoint > 0) {
-                  const nextLine = line.splice(
-                    breakPoint,
-                    line.length - breakPoint
+                  if (WHITE_SPACE.includes(breakPointGlyph.shaping.symbol)) {
+                    line.glyphs.splice(breakPoint.glyphIdx, 1)
+                  } else if (
+                    breakPoint.x +
+                      breakPointGlyph.shaping.xAdvance * fontScale <=
+                    maxWidth
+                  ) {
+                    // Increase breakpoint index to take within this line
+                    breakPoint.glyphIdx++
+                  }
+                }
+
+                if (breakPoint.glyphIdx > 0) {
+                  const nextLineGlyphs = line.glyphs.splice(
+                    breakPoint.glyphIdx,
+                    line.glyphs.length - breakPoint.glyphIdx
                   )
+                  const nextLine: Line = {
+                    glyphs: nextLineGlyphs,
+                    width: 0,
+                    height: 0
+                  }
+
+                  line.width = breakPoint.x
                   lines.splice(lineIdx + 1, 0, nextLine)
                   break
                 }
@@ -235,9 +290,23 @@ class TextRenderer {
           }
         }
 
+        line.width = this._getLineWidth(line, options)
         lineIdx++
       }
     }
+  }
+
+  private _getLineWidth(line: Line, options: TextOptions): number {
+    const { font } = this.getFont(options.fontFace)
+    const fontSize = options.fontSize
+    const fontScale = (1 / font.unitsPerEm) * fontSize
+
+    return line.glyphs.reduce((acc, { shaping }) => {
+      if (shaping.xAdvance) {
+        acc += shaping.xAdvance * fontScale
+      }
+      return acc
+    }, 0)
   }
 }
 
