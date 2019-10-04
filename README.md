@@ -62,3 +62,8 @@ getFont(name: string)
 async useFont(name: string)
 
 async createTextGeometry(text: string, options: TextOptions)
+
+# Thanks
+
+- Behdad Esfahbod http://harfbuzz.org/
+- Ebrahim Byagowi
