@@ -3,10 +3,13 @@ export enum RulerDirection {
   Vertical
 }
 
+type ClickHandler = (offset: number) => void
+
 export default class Ruler {
   canvas: HTMLCanvasElement
   context: CanvasRenderingContext2D
   direction: RulerDirection
+  clickHandlers: Set<ClickHandler> = new Set()
 
   width: number = 0
   height: number = 0
@@ -70,6 +73,11 @@ export default class Ruler {
       this.context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
     }
 
+    this.canvas.addEventListener('click', (ev: any) => {
+      const offset =
+        direction === RulerDirection.Horizontal ? ev.layerX : ev.layerY
+      this.clickHandlers.forEach(callback => callback(offset))
+    })
     window.addEventListener('resize', handleResize)
 
     handleResize()
@@ -126,5 +134,11 @@ export default class Ruler {
         break
     }
     this.context.globalAlpha = 1
+  }
+
+  onClick(callback: ClickHandler) {
+    this.clickHandlers.add(callback)
+
+    return () => this.clickHandlers.delete(callback)
   }
 }

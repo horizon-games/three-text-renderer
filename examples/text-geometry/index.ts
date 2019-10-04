@@ -13,7 +13,7 @@ import {
   PlaneBufferGeometry
 } from 'three'
 import TextEditor from '../common/TextEditor'
-import Ruler, { RulerDirection } from '../contour-extractor/Ruler'
+import Ruler, { RulerDirection } from '../common/Ruler'
 
 const canvas = document.querySelector('canvas#viewport')! as HTMLCanvasElement
 const rulerHorizontal = new Ruler(
@@ -38,14 +38,14 @@ async function main() {
   const textEditor = new TextEditor(textRenderer)
   textEditor.onUpdate(update)
 
-  rulerHorizontal.canvas.addEventListener('click', ev => {
-    textEditor.maxWidth = (ev as any).layerX
+  rulerHorizontal.onClick(offset => {
+    textEditor.maxWidth = offset
 
     update()
   })
 
-  rulerVertical.canvas.addEventListener('click', ev => {
-    textEditor.maxHeight = (ev as any).layerY
+  rulerVertical.onClick(offset => {
+    textEditor.maxHeight = offset
 
     update()
   })

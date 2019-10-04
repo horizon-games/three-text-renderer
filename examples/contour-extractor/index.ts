@@ -9,7 +9,7 @@ import AmiriBold from '../fonts/Amiri-Bold.ttf'
 
 import { Path } from 'opentype.js'
 
-import Ruler, { RulerDirection } from './Ruler'
+import Ruler, { RulerDirection } from '../common/Ruler'
 import TextEditor from '../common/TextEditor'
 
 const canvas = document.querySelector('canvas#viewport') as HTMLCanvasElement
@@ -34,15 +34,13 @@ async function main() {
   const textEditor = new TextEditor(textRenderer)
   textEditor.onUpdate(update)
 
-  rulerHorizontal.canvas.addEventListener('click', ev => {
-    textEditor.maxWidth = (ev as any).layerX
-
+  rulerHorizontal.onClick(offset => {
+    textEditor.maxWidth = offset
     update()
   })
 
-  rulerVertical.canvas.addEventListener('click', ev => {
-    textEditor.maxHeight = (ev as any).layerY
-
+  rulerVertical.onClick(offset => {
+    textEditor.maxHeight = offset
     update()
   })
 
