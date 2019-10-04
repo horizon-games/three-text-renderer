@@ -1,4 +1,4 @@
-import { Glyph, Path } from 'opentype.js'
+import { Font, Glyph, Path } from 'opentype.js'
 import {
   BufferAttribute,
   BufferGeometry,
@@ -100,18 +100,26 @@ class TextRenderer {
     })
   }
 
-  async getTextContours(text: string, options: TextOptions): Promise<Line[]> {
+  async getTextContours(
+    text: string,
+    options: TextOptions,
+    layout: boolean = false
+  ): Promise<Line[]> {
     const { font } = await this.useFont(options.fontFace)
     const lines: Line[] = await this.getShapedGlyphs(text, options)
 
     this._formatLines(lines, options)
 
-    // Add Path contours to lines
+    const layoutEngine = new LayoutEngine(lines, options, font)
+
+    // Add path contours to lines
     lines.forEach(line => {
       const fontSize = options.fontSize
 
       line.glyphs.forEach(shapedGlyph => {
-        shapedGlyph.path = shapedGlyph.glyph.getPath(0, 0, fontSize, {}, font)
+        const [x, y] = layout ? layoutEngine.next() : [0, 0]
+
+        shapedGlyph.path = shapedGlyph.glyph.getPath(x, y, fontSize, {}, font)
       })
     })
 
@@ -120,10 +128,6 @@ class TextRenderer {
 
   async createTextGeometry(text: string, options: TextOptions) {
     const { font } = await this.useFont(options.fontFace)
-    const { ascender, unitsPerEm } = font
-    const { fontSize, letterSpacing, maxWidth, align } = options
-    const fontScale = (1 / unitsPerEm) * fontSize
-    const lineHeight = ascender * fontScale
     const geometry = new BufferGeometry()
     const vertices: number[] = []
     const indices: number[] = []
@@ -134,73 +138,39 @@ class TextRenderer {
     // XXX: Hey Tom, this is where you can process these glyph lines.
     // --------------------------------------------------------------
 
-    const maxLineWidth = lines.reduce((acc, line) => {
-      return Math.max(acc, line.width)
-    }, 0)
+    const layoutEngine = new LayoutEngine(lines, options, font)
 
-    let xAdvance = 0
-    let yAdvance = 0
     let currIdx = 0
 
     lines.forEach(line => {
-      const xAlignOffset = (function() {
-        switch (align) {
-          case TextAlign.Right:
-            return maxWidth ? maxWidth - line.width : maxLineWidth - line.width
-
-          case TextAlign.Center:
-            return maxWidth
-              ? maxWidth / 2 - line.width / 2
-              : maxLineWidth / 2 - line.width / 2
-
-          case TextAlign.Left:
-            return 0
-        }
-
-        return 0
-      })()
-
       const z = 0
 
       line.glyphs.forEach((shapedGlyph, idx) => {
-        const { shaping, path } = shapedGlyph
-        const bb = path!.getBoundingBox()
         const faceIdx = currIdx + idx * 4
-        const xOffset = shaping.xOffset * fontScale + xAlignOffset
-        const yOffset = shaping.yOffset * fontScale
+        const { path } = shapedGlyph
+        const bb = path!.getBoundingBox()
+        const [xOffset, yOffset] = layoutEngine.next()
 
         vertices.push(
-          bb.x1 + xAdvance + xOffset,
-          bb.y2 + yAdvance + yOffset,
+          bb.x1 + xOffset,
+          bb.y2 + yOffset,
           z,
-          bb.x1 + xAdvance + xOffset,
-          bb.y1 + yAdvance + yOffset,
+          bb.x1 + xOffset,
+          bb.y1 + yOffset,
           z,
-          bb.x2 + xAdvance + xOffset,
-          bb.y1 + yAdvance + yOffset,
+          bb.x2 + xOffset,
+          bb.y1 + yOffset,
           z,
-          bb.x2 + xAdvance + xOffset,
-          bb.y2 + yAdvance + yOffset,
+          bb.x2 + xOffset,
+          bb.y2 + yOffset,
           z
         )
 
         indices.push(faceIdx + 0, faceIdx + 1, faceIdx + 2)
         indices.push(faceIdx + 0, faceIdx + 2, faceIdx + 3)
-
-        xAdvance += shaping.xAdvance * fontScale
-
-        if (letterSpacing) {
-          xAdvance += letterSpacing * unitsPerEm * fontScale
-        }
-
-        yAdvance += shaping.yAdvance * fontScale
       })
 
       currIdx += line.glyphs.length * 4
-
-      // TODO support xOffsets for TTB direction
-      xAdvance = 0
-      yAdvance += lineHeight
     })
 
     geometry.addAttribute(
@@ -312,6 +282,95 @@ class TextRenderer {
 
       return acc
     }, 0)
+  }
+}
+
+class LayoutEngine {
+  lines: Line[]
+  options: TextOptions
+  font: Font
+  maxLineWidth: number
+
+  private _lineIdx: number = -1
+  private _glyphIdx: number = 0
+
+  private _xAdvance: number = 0
+  private _yAdvance: number = 0
+
+  constructor(lines: Line[], options: TextOptions, font: Font) {
+    this.font = font
+    this.lines = lines
+    this.options = options
+
+    this.maxLineWidth = lines.reduce((acc, line) => {
+      return Math.max(acc, line.width)
+    }, 0)
+
+    this._nextLine()
+  }
+
+  next() {
+    const line = this.lines[this._lineIdx]
+    const glyph = line.glyphs[this._glyphIdx++]
+    const { unitsPerEm } = this.font
+    const { fontSize, letterSpacing } = this.options
+    const fontScale = (1 / unitsPerEm) * fontSize
+
+    const x = this._xAdvance + glyph.shaping.xOffset * fontScale
+    const y = this._yAdvance + glyph.shaping.yOffset * fontScale
+
+    this._xAdvance += glyph.shaping.xAdvance * fontScale
+    this._yAdvance += glyph.shaping.yAdvance * fontScale
+
+    if (letterSpacing) {
+      this._xAdvance += letterSpacing * unitsPerEm * fontScale
+    }
+
+    if (
+      this._glyphIdx === line.glyphs.length &&
+      this._lineIdx < this.lines.length - 1
+    ) {
+      this._nextLine()
+    }
+
+    return [x, y]
+  }
+
+  private _nextLine() {
+    const line = this.lines[++this._lineIdx]
+
+    if (!line) {
+      throw new Error(`LayoutEngine: Exceeded line length: ${this._lineIdx}`)
+    }
+
+    const { ascender, unitsPerEm } = this.font
+    const { fontSize, maxWidth, align } = this.options
+    const fontScale = (1 / unitsPerEm) * fontSize
+    const lineHeight = ascender * fontScale * (this.options.lineHeight || 1)
+
+    this._glyphIdx = 0
+
+    const xAlignOffset = (() => {
+      switch (align) {
+        case TextAlign.Right:
+          return maxWidth
+            ? maxWidth - line.width
+            : this.maxLineWidth - line.width
+
+        case TextAlign.Center:
+          return maxWidth
+            ? maxWidth / 2 - line.width / 2
+            : this.maxLineWidth / 2 - line.width / 2
+
+        case TextAlign.Left:
+          return 0
+      }
+
+      return 0
+    })()
+
+    this._xAdvance = xAlignOffset
+    this._yAdvance += lineHeight
   }
 }
 

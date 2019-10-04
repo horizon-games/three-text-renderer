@@ -7,7 +7,7 @@ import BarlowBold from '../fonts/Barlow-Bold.ttf'
 import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
 import AmiriBold from '../fonts/Amiri-Bold.ttf'
 
-import { Path, BoundingBox } from 'opentype.js'
+import { Path } from 'opentype.js'
 
 import Ruler, { RulerDirection } from './Ruler'
 import TextEditor from '../common/TextEditor'
@@ -47,26 +47,23 @@ async function main() {
   })
 
   let lines: Line[] = []
-  let fontScale: number
-  let lineHeight: number
 
   async function update() {
-    const { font } = await textRenderer.useFont(textEditor.font)
-    const { ascender, unitsPerEm } = font
-
-    fontScale = (1 / unitsPerEm) * textEditor.fontSize
-    lineHeight = (textEditor.lineHeight || 1) * fontScale * ascender
-
-    lines = await textRenderer.getTextContours(textEditor.text, {
-      fontFace: textEditor.font,
-      fontSize: textEditor.fontSize,
-      lang: 'en',
-      direction: textEditor.textDirection,
-      align: textEditor.textAlign,
-      letterSpacing: textEditor.letterSpacing,
-      maxWidth: textEditor.maxWidth,
-      maxHeight: textEditor.maxHeight
-    })
+    lines = await textRenderer.getTextContours(
+      textEditor.text,
+      {
+        fontFace: textEditor.font,
+        fontSize: textEditor.fontSize,
+        lang: 'en',
+        direction: textEditor.textDirection,
+        align: textEditor.textAlign,
+        lineHeight: textEditor.lineHeight,
+        letterSpacing: textEditor.letterSpacing,
+        maxWidth: textEditor.maxWidth,
+        maxHeight: textEditor.maxHeight
+      },
+      true
+    )
 
     render()
   }
@@ -124,31 +121,22 @@ async function main() {
       context.closePath()
     }
 
-    // XXX Need a different way to do this
-    // lines.forEach(line => {
-    //   const boundingBoxes = line.glyphs.map(({ path }) => path!.getBoundingBox())
-    //   const mergedPath = line.paths.reduce<Path>((acc, path) => {
-    //     acc.extend(path)
-    //     return acc
-    //   }, new Path())
+    lines.forEach(line => {
+      const boundingBoxes = line.glyphs.map(({ path }) =>
+        path!.getBoundingBox()
+      )
+      const mergedPath = line.glyphs.reduce<Path>((acc, glyph) => {
+        acc.extend(glyph.path!)
+        return acc
+      }, new Path())
 
-    //   renderLine(mergedPath, boundingBoxes, lineHeight)
-    // })
-  }
+      mergedPath.draw(context)
 
-  function renderLine(
-    path: Path,
-    boundingBoxes: BoundingBox[],
-    lineHeight: number
-  ) {
-    context.translate(0, lineHeight)
-
-    path.draw(context)
-
-    context.strokeStyle = 'rgba(0, 0, 255, 1)'
-    // Draw bounding boxes
-    boundingBoxes.forEach(bb => {
-      context.strokeRect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1)
+      // Draw bounding boxes
+      context.strokeStyle = 'rgba(0, 0, 255, 1)'
+      boundingBoxes.forEach(bb => {
+        context.strokeRect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1)
+      })
     })
   }
 

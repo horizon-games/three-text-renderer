@@ -22,6 +22,7 @@ export interface TextOptions {
   lang: Language
   direction: TextDirection
   align?: TextAlign
+  lineHeight?: number
   letterSpacing?: number
   maxWidth?: number
   maxHeight?: number

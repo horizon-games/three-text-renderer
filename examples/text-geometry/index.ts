@@ -96,6 +96,7 @@ async function main() {
       lang: 'en',
       direction: textEditor.textDirection,
       align: textEditor.textAlign,
+      lineHeight: textEditor.lineHeight,
       letterSpacing: textEditor.letterSpacing,
       maxWidth: textEditor.maxWidth,
       maxHeight: textEditor.maxHeight
@@ -129,7 +130,7 @@ async function main() {
     //const height = Math.abs(boundingBox.min.y - boundingBox.max.y)
     //mesh.add(box)
 
-    geometry.translate(-maxWidth / 2, -maxHeight / 2 + textEditor.fontSize, 0)
+    geometry.translate(-maxWidth / 2, -maxHeight / 2, 0)
 
     mesh.position.x += maxWidth / 2
     mesh.position.y += maxHeight / 2
