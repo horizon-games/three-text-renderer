@@ -44,7 +44,8 @@ export default class MDSFAtlas {
         for (const curveMesh of makeTtfShapeMeshes(
           data.ttfPath,
           undefined,
-          0.01
+          0.01,
+          1
         )) {
           this._msdfKit.add(curveMesh)
         }

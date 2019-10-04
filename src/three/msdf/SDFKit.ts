@@ -55,7 +55,6 @@ export default class SDFKit {
   }
   render(renderer: WebGLRenderer) {
     const lines = this._lineSegments
-    // renderer.setClearColor(COLOR_GRAY)
     if (lines.length > 0) {
       function clearRT(rt: WebGLRenderTarget) {
         renderer.setRenderTarget(rt)
@@ -69,24 +68,16 @@ export default class SDFKit {
         clearRT(this._tempTarget)
         this._scene.add(l)
         const mat = l.material as RawShaderMaterial
-        // mat.blendEquation = MinEquation
-        // mat.blending = CustomBlending
         mat.depthTest = true
         mat.depthWrite = true
         renderer.render(this._scene, this._camera)
         this._scene.remove(l)
         this._blitKit.render(renderer)
         this._blitKit.swap()
-        // if(j===1) break
       }
-      renderer.render(this._scene, this._camera)
-      for (const l of lines) {
-        this._scene.remove(l)
-      }
-      // this._combiner.render(renderer, this._finalRt)
       renderer.setRenderTarget(null)
-      // lines.length = 0
     }
+    this._lineSegments.length = 0
   }
   getPreviewMeshChannels() {
     const pivot = new Object3D()
