@@ -1,5 +1,12 @@
 import { Glyph, Path } from 'opentype.js'
-import { BufferAttribute, BufferGeometry, Texture } from 'three'
+import {
+  BufferAttribute,
+  BufferGeometry,
+  LinearEncoding,
+  LinearFilter,
+  RGBFormat,
+  WebGLRenderTarget
+} from 'three'
 
 import FontLoader from './FontLoader'
 import { getTextShaping, Shaping } from './lib/raqm'
@@ -22,15 +29,24 @@ const BREAK_POINT_SYMBOLS = [' ', ',']
 const WHITE_SPACE = [' ']
 
 class TextRenderer {
+  get texture() {
+    return this._atlasTarget.texture
+  }
   fonts: Map<string, FontLoader> = new Map()
-  texture: Texture
   options: TextRendererOptions = {}
   raqm: WebAssembly.WebAssemblyInstantiatedSource | undefined
+  private _atlasTarget: WebGLRenderTarget
 
   constructor(options: Partial<TextRendererOptions> = {}) {
     Object.assign(this.options, options)
 
-    this.texture = new Texture()
+    this._atlasTarget = new WebGLRenderTarget(2048, 2048, {
+      format: RGBFormat,
+      minFilter: LinearFilter,
+      magFilter: LinearFilter,
+      generateMipmaps: false
+    })
+    this.texture.encoding = LinearEncoding
   }
 
   addFont(key: string, path: string) {

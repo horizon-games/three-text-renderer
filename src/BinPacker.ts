@@ -89,9 +89,10 @@ export default class BinPacker {
     const firstWaste = bestCorner1 ? bestCorner1.waste : Infinity
     const bestCorner2 = this.scoreCorners(new Vector2(bin.y, bin.x))
     const secondWaste = bestCorner2 ? bestCorner2.waste : Infinity
-    if(firstWaste === Infinity && secondWaste === Infinity) throw new Error('Could not fit bin, even with rotation')
-    const bestCorner =
-      firstWaste < secondWaste ? bestCorner1 : bestCorner2
+    if (firstWaste === Infinity && secondWaste === Infinity) {
+      throw new Error('Could not fit bin, even with rotation')
+    }
+    const bestCorner = firstWaste < secondWaste ? bestCorner1 : bestCorner2
 
     let angle = 0
     if (bestCorner === bestCorner2) {

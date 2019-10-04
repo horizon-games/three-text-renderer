@@ -1,6 +1,7 @@
+import { BoundingBox, Path } from 'opentype.js'
+
+import { TextAlign, TextDirection, TextOptions } from './TextOptions'
 import TextRenderer from './TextRenderer'
-import { TextOptions, TextDirection, TextAlign } from './TextOptions'
-import { Path, BoundingBox } from 'opentype.js'
 
 export default TextRenderer
 
