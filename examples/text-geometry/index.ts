@@ -27,10 +27,11 @@ const rulerVertical = new Ruler(
   RulerDirection.Vertical
 )
 
-const showAtlasPreview = false
-
 const checkboxAnimate = document.querySelector(
   'input#animate'
+)! as HTMLInputElement
+const checkboxAtlasPreview = document.querySelector(
+  'input#atlas-preview'
 )! as HTMLInputElement
 
 async function main() {
@@ -62,12 +63,12 @@ async function main() {
   const camera = new OrthographicCamera(1, 1, 1, 1)
   camera.position.z = 5
   scene.add(camera)
-  if (showAtlasPreview) {
-    const prev = textRenderer.getPreviewMeshMSDF()
-    prev.scale.multiplyScalar(200)
-    prev.position.set(100, 100, 400)
-    scene.add(prev)
-  }
+  //if (showAtlasPreview) {
+  const preview = textRenderer.getPreviewMeshMSDF()
+  preview.scale.multiplyScalar(200)
+  preview.position.set(100, 100, 400)
+  scene.add(preview)
+  //}
 
   function handleResize() {
     const { innerWidth, innerHeight } = window
@@ -169,6 +170,8 @@ async function main() {
         mesh.rotation.set(0, 0, 0)
       }
     }
+
+    preview.visible = checkboxAtlasPreview.checked
 
     textRenderer.render(renderer)
 
