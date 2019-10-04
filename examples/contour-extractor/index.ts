@@ -1,5 +1,6 @@
 import TextRenderer, { Line } from '../../src/index'
 
+import RobotoBold from '../fonts/Roboto-Bold.ttf'
 import BarlowBold from '../fonts/Barlow-Bold.ttf'
 //import fontPath from '../fonts/FiraCode-Bold.otf'
 //import fontPath from '../fonts/ArefRuqaa-Bold.ttf'
@@ -27,6 +28,7 @@ async function main() {
   const textRenderer = new TextRenderer()
 
   // Add fonts
+  textRenderer.addFont('Roboto-Bold', RobotoBold)
   textRenderer.addFont('Barlow-Bold', BarlowBold)
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
   textRenderer.addFont('Amiri-Bold', AmiriBold)

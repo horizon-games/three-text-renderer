@@ -1,4 +1,5 @@
 import TextRenderer from '../../src/index'
+import RobotoBold from '../fonts/Roboto-Bold.ttf'
 import BarlowBold from '../fonts/Barlow-Bold.ttf'
 import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
 
@@ -35,6 +36,7 @@ const checkboxAnimate = document.querySelector(
 async function main() {
   const textRenderer = new TextRenderer()
 
+  textRenderer.addFont('Roboto-Bold', RobotoBold)
   textRenderer.addFont('Barlow-Bold', BarlowBold)
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
 
@@ -59,14 +61,13 @@ async function main() {
   const camera = new OrthographicCamera(1, 1, 1, 1)
   camera.position.z = 5
   scene.add(camera)
-  if(showAtlasPreview) {
+  if (showAtlasPreview) {
     const prev = textRenderer.getPreviewMeshMSDF()
     prev.add(new Mesh(new SphereBufferGeometry(0.5)))
     prev.scale.multiplyScalar(200)
     prev.position.set(100, 100, 400)
     scene.add(prev)
   }
-
 
   function handleResize() {
     const { innerWidth, innerHeight } = window
