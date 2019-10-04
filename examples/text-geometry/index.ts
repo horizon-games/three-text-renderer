@@ -71,8 +71,8 @@ async function main() {
 
     camera.updateProjectionMatrix()
 
-    //camera.position.x = textEditor.maxWidth / 2
-    //camera.position.y = textEditor.maxHeight / 2
+    camera.position.x = width / 2
+    camera.position.y = height / 2
   }
 
   handleResize()
@@ -130,10 +130,8 @@ async function main() {
 
     geometry.translate(-maxWidth / 2, -maxHeight / 2 + textEditor.fontSize, 0)
 
-    // mesh.position.x = maxWidth / 2 + maxWidth - width
-    // mesh.position.y = maxHeight / 2
-
-    //mesh.position.x += width / 2
+    mesh.position.x += maxWidth / 2
+    mesh.position.y += maxHeight / 2
 
     rulerHorizontal.render(maxWidth)
     rulerVertical.render(maxHeight)
@@ -146,10 +144,10 @@ async function main() {
   let frameCount = 0
   const loop = () => {
     if (mesh) {
-      rotation.y = Math.sin(frameCount / 100)
-      rotation.x = Math.sin(frameCount / 400)
+      rotation.y = Math.sin(frameCount / 100) / 2
+      rotation.x = Math.sin(frameCount / 400) / 2
 
-      //mesh.rotation.setFromVector3(rotation)
+      mesh.rotation.setFromVector3(rotation)
     }
 
     renderer.render(scene, camera)
