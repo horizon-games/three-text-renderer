@@ -29,21 +29,6 @@ const rulerVertical = new Ruler(
 )
 
 async function main() {
-  const scene = new Scene()
-  const renderer = new WebGLRenderer({ canvas })
-  renderer.setSize(window.innerWidth - 30, window.innerHeight - 30)
-  renderer.setClearColor(0xcccccc)
-  const camera = new OrthographicCamera(
-    window.innerWidth / -2,
-    window.innerWidth / 2,
-    window.innerHeight / -2,
-    window.innerHeight / 2,
-    window.innerWidth / -2,
-    window.innerWidth / 2
-  )
-  camera.position.z = 5
-  scene.add(camera)
-
   const textRenderer = new TextRenderer()
 
   textRenderer.addFont('Barlow-Bold', BarlowBold)
@@ -61,6 +46,39 @@ async function main() {
   rulerVertical.canvas.addEventListener('click', ev => {
     textEditor.maxHeight = (ev as any).layerY
 
+    update()
+  })
+
+  const scene = new Scene()
+  const renderer = new WebGLRenderer({ canvas })
+  renderer.setClearColor(0xcccccc)
+  const camera = new OrthographicCamera(1, 1, 1, 1)
+  camera.position.z = 5
+  scene.add(camera)
+
+  function handleResize() {
+    const { innerWidth, innerHeight } = window
+    const width = innerWidth - 30
+    const height = innerHeight - 30
+
+    renderer.setSize(width, height)
+    camera.left = width / -2
+    camera.right = width / 2
+    camera.top = height / -2
+    camera.bottom = height / 2
+    camera.near = -1000
+    camera.far = 1000
+
+    camera.updateProjectionMatrix()
+
+    //camera.position.x = textEditor.maxWidth / 2
+    //camera.position.y = textEditor.maxHeight / 2
+  }
+
+  handleResize()
+
+  window.addEventListener('resize', () => {
+    handleResize()
     update()
   })
 
@@ -84,8 +102,6 @@ async function main() {
 
     const { maxWidth, maxHeight } = textEditor
 
-    console.log(geometry)
-
     mesh = new Mesh(
       geometry,
       new MeshBasicMaterial({
@@ -97,8 +113,6 @@ async function main() {
     scene.add(mesh)
 
     const { boundingBox } = geometry
-    console.log(boundingBox)
-
     const boundingMesh = new Mesh(
       new PlaneBufferGeometry(maxWidth, maxHeight),
       new MeshBasicMaterial({
@@ -111,10 +125,15 @@ async function main() {
     //const box = new Box3Helper(boundingBox, new Color(0x0000ff))
     //mesh.add(box)
 
-    //const width = Math.abs(boundingBox.min.x - boundingBox.max.x)
+    const width = Math.abs(boundingBox.min.x - boundingBox.max.x)
     //const height = Math.abs(boundingBox.min.y - boundingBox.max.y)
 
     geometry.translate(-maxWidth / 2, -maxHeight / 2 + textEditor.fontSize, 0)
+
+    // mesh.position.x = maxWidth / 2 + maxWidth - width
+    // mesh.position.y = maxHeight / 2
+
+    //mesh.position.x += width / 2
 
     rulerHorizontal.render(maxWidth)
     rulerVertical.render(maxHeight)
@@ -130,7 +149,7 @@ async function main() {
       rotation.y = Math.sin(frameCount / 100)
       rotation.x = Math.sin(frameCount / 400)
 
-      mesh.rotation.setFromVector3(rotation)
+      //mesh.rotation.setFromVector3(rotation)
     }
 
     renderer.render(scene, camera)
