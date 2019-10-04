@@ -69,15 +69,15 @@ export default class SDFCurveMaterial extends RawShaderMaterial {
     this._vAHHAy.z += y
   }
   transform(offset: Vector2, scale: number) {
-    this._vAHHAx.x = (this._vAHHAx.x - offset.x) * scale
-    this._vAHHAx.y = (this._vAHHAx.y - offset.x) * scale
-    this._vAHHAx.z = (this._vAHHAx.z - offset.x) * scale
-    this._vAHHAx.w = (this._vAHHAx.w - offset.x) * scale
+    this._vAHHAx.x = (this._vAHHAx.x + offset.x) * scale
+    this._vAHHAx.y = (this._vAHHAx.y + offset.x) * scale
+    this._vAHHAx.z = (this._vAHHAx.z + offset.x) * scale
+    this._vAHHAx.w = (this._vAHHAx.w + offset.x) * scale
 
-    this._vAHHAy.x = (this._vAHHAy.x - offset.y) * scale
-    this._vAHHAy.y = (this._vAHHAy.y - offset.y) * scale
-    this._vAHHAy.z = (this._vAHHAy.z - offset.y) * scale
-    this._vAHHAy.w = (this._vAHHAy.w - offset.y) * scale
+    this._vAHHAy.x = (this._vAHHAy.x + offset.y) * scale
+    this._vAHHAy.y = (this._vAHHAy.y + offset.y) * scale
+    this._vAHHAy.z = (this._vAHHAy.z + offset.y) * scale
+    this._vAHHAy.w = (this._vAHHAy.w + offset.y) * scale
   }
   set padding(value: number) {
     this._uPadding.value = value

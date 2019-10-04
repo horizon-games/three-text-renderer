@@ -7,6 +7,7 @@ import {
   RGBAFormat,
   Scene,
   Texture,
+  Vector2,
   WebGLRenderer,
   WebGLRenderTarget
 } from 'three'
@@ -17,8 +18,8 @@ export interface DoubleBufferRawShaderMaterial extends RawShaderMaterial {
   newTexture: Texture
 }
 
-function nrt() {
-  const rt = new WebGLRenderTarget(64, 64, {
+function nrt(width: number, height: number) {
+  const rt = new WebGLRenderTarget(width, height, {
     depthBuffer: true,
     stencilBuffer: false,
     magFilter: NearestFilter,
@@ -34,9 +35,11 @@ export default class DoubleBufferBlitKit {
   private _camera = new OrthographicCamera(-1, 1, -1, 1, -1, 1)
   private _insistSwap = false
   constructor(
+    private _width = 64,
+    private _height = 64,
     private dbMaterial: DoubleBufferRawShaderMaterial,
-    private _rt = nrt(),
-    private _rt2 = nrt()
+    private _rt = nrt(_width, _height),
+    private _rt2 = nrt(_width, _height)
   ) {
     dbMaterial.backBufferTexture = this._rt.texture
     const surface = new Mesh(getCachedClipSurfaceGeometry(), dbMaterial)
@@ -59,6 +62,17 @@ export default class DoubleBufferBlitKit {
     const rtt2 = this._rt2.texture
     mat.backBufferTexture = mat.backBufferTexture === rtt1 ? rtt2 : rtt1
     this._insistSwap = false
+  }
+  resize(size: Vector2) {
+    if (size.width !== this._width || size.height !== this._height) {
+      this._rt = nrt(size.width, size.height)
+      this._rt2 = nrt(size.width, size.height)
+      this.dbMaterial.backBufferTexture = this._rt.texture
+      this._width = size.width
+      this._height = size.height
+      this.swap()
+      this.swap()
+    }
   }
   get frontBufferTarget() {
     const rt1 = this._rt

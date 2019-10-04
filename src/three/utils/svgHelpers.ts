@@ -1,12 +1,4 @@
-import {
-  CubicBezierCurve,
-  LineCurve,
-  Mesh,
-  Object3D,
-  Path,
-  ShapePath,
-  Vector2
-} from 'three'
+import { CubicBezierCurve, LineCurve, Path, ShapePath, Vector2 } from 'three'
 
 import { lerp } from '../../utils/math'
 import SDFCurveMesh from '../meshes/SDFCurveMesh'
@@ -521,21 +513,22 @@ export function parseSVGPath(d: string) {
 
 export function makeSvgShapeMeshes(
   shape: ShapePath,
-  offset: Vector2,
-  scale: number
+  padding: number,
+  scale: number,
+  offset: Vector2
 ) {
   const meshes: SDFCurveMesh[] = []
   for (const subPath of shape.subPaths as Path[]) {
     for (const curve of subPath.curves) {
       let curveMesh: SDFCurveMesh | undefined
       if (curve instanceof CubicBezierCurve) {
-        curveMesh = new SDFCurveMesh('bezier', 16, 1)
+        curveMesh = new SDFCurveMesh('bezier', 16, 1, padding)
         curveMesh.setAnchor1v(curve.v0)
         curveMesh.setHandle1v(curve.v1)
         curveMesh.setHandle2v(curve.v2)
         curveMesh.setAnchor2v(curve.v3)
       } else if (curve instanceof LineCurve) {
-        curveMesh = new SDFCurveMesh('linear', 2, 1)
+        curveMesh = new SDFCurveMesh('linear', 2, 1, padding)
         curveMesh.setAnchor1v(curve.v1)
         curveMesh.setHandle1(
           lerp(curve.v1.x, curve.v2.x, 1 / 3),

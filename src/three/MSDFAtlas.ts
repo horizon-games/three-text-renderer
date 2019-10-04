@@ -30,8 +30,8 @@ export default class MDSFAtlas {
   get texture() {
     return this._msdfKit.texture
   }
-  constructor(size = 2048) {
-    this._msdfKit = new MSDFKit()
+  constructor(size = 2048, msdfKit?: MSDFKit) {
+    this._msdfKit = msdfKit || new MSDFKit()
     this._atlas = new TextureAtlas(size)
   }
   render(renderer: WebGLRenderer) {

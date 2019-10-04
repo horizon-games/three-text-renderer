@@ -19,6 +19,7 @@ export interface Line {
 }
 
 interface TextRendererOptions {
+  atlas?: MSDFAtlas
   atlasSize: number
 }
 
@@ -38,7 +39,7 @@ class TextRenderer {
 
   constructor(options: Partial<TextRendererOptions> = {}) {
     Object.assign(this.options, options)
-    this._atlas = new MSDFAtlas(options.atlasSize)
+    this._atlas = this.options.atlas || new MSDFAtlas(this.options.atlasSize)
   }
 
   addFont(key: string, path: string) {

@@ -74,7 +74,7 @@ export function rand2(scale: number = 1, offset: number = 0) {
 }
 
 export function nextHighestPowerOfTwo(val: number) {
-  return Math.pow(Math.ceil(Math.sqrt(val)), 2)
+  return Math.pow(2, Math.ceil(Math.log(val) / Math.log(2)))
 }
 
 export function isPowerOfTwo(x: number): boolean {

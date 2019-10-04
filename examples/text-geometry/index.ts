@@ -11,8 +11,7 @@ import {
   MeshBasicMaterial,
   DoubleSide,
   Vector3,
-  PlaneBufferGeometry,
-  SphereBufferGeometry
+  PlaneBufferGeometry
 } from 'three'
 import TextEditor from '../common/TextEditor'
 import Ruler, { RulerDirection } from '../common/Ruler'

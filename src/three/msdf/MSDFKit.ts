@@ -1,5 +1,13 @@
-import { Color, Mesh, Object3D, WebGLRenderer } from 'three'
+import {
+  Color,
+  Mesh,
+  MeshBasicMaterial,
+  Object3D,
+  Vector2,
+  WebGLRenderer
+} from 'three'
 
+import { nextHighestPowerOfTwo } from '../../utils/math'
 import TestMSDFMaterial from '../materials/TestMSDFMaterial'
 import { getCachedUnitPlaneGeometry } from '../utils/geometry'
 import { makeTexturePreviewMaterial } from '../utils/threeUtils'
@@ -9,15 +17,38 @@ import SDFKit from './SDFKit'
 export const COLOR_GRAY: Readonly<Color> = new Color(0.5, 0.5, 0.5)
 
 export default class MSDFKit {
+  get texture() {
+    return this._combiner.finalTexture
+  }
+  get previewMeshMSDFMaterial() {
+    if (!this._previewMeshMSDFMaterial) {
+      this._previewMeshMSDFMaterial = makeTexturePreviewMaterial(
+        this._combiner.finalTexture
+      )
+    }
+    return this._previewMeshMSDFMaterial
+  }
+  get previewMeshTestMSDFMaterial() {
+    if (!this._previewMeshTestMSDFMaterial) {
+      this._previewMeshTestMSDFMaterial = new TestMSDFMaterial(
+        this._combiner.finalTexture,
+        this._width,
+        this._height
+      )
+    }
+    return this._previewMeshTestMSDFMaterial
+  }
   private _sdfKits: SDFKit[] = []
   private _combiner: MSDFCombinerKit
   private lineCount = 0
-  constructor() {
+  private _previewMeshMSDFMaterial: MeshBasicMaterial | undefined
+  private _previewMeshTestMSDFMaterial: TestMSDFMaterial | undefined
+  constructor(private _width = 64, private _height = 64) {
     const sdfKits: SDFKit[] = []
     for (let i = 0; i < 3; i++) {
-      sdfKits.push(new SDFKit())
+      sdfKits.push(new SDFKit(_width, _height))
     }
-    const combiner = new MSDFCombinerKit()
+    const combiner = new MSDFCombinerKit(_width, _height)
     this._sdfKits = sdfKits
     this._combiner = combiner
   }
@@ -37,13 +68,11 @@ export default class MSDFKit {
     this._combiner.render(renderer)
     renderer.setRenderTarget(null)
   }
-  get texture() {
-    return this._combiner.finalTexture
-  }
+
   getPreviewMeshMSDF() {
     const pm = new Mesh(
       getCachedUnitPlaneGeometry(),
-      makeTexturePreviewMaterial(this._combiner.finalTexture)
+      this.previewMeshMSDFMaterial
     )
     pm.rotation.x = Math.PI
     pm.renderOrder = 9999
@@ -52,7 +81,7 @@ export default class MSDFKit {
   getPreviewMeshTestMSDF() {
     const pm = new Mesh(
       getCachedUnitPlaneGeometry(),
-      new TestMSDFMaterial(this._combiner.finalTexture)
+      this.previewMeshTestMSDFMaterial
     )
     return pm
   }
@@ -69,5 +98,29 @@ export default class MSDFKit {
       pm.position.x = i + 0.5 - previews.length * 0.5
     }
     return pivot
+  }
+  resize(size: Vector2) {
+    // size.width = 16
+    // size.height = 128
+    // size.width = ~~(size.width)
+    // size.height = ~~(size.height)
+    size.width = nextHighestPowerOfTwo(size.width)
+    size.height = nextHighestPowerOfTwo(size.height)
+    if (this._width !== size.width || this._height !== size.height) {
+      if (this._combiner.resize(size)) {
+        for (const sdf of this._sdfKits) {
+          sdf.resize(size)
+        }
+        if (this._previewMeshMSDFMaterial) {
+          this._previewMeshMSDFMaterial.map = this._combiner.finalTexture
+        }
+        if (this._previewMeshTestMSDFMaterial) {
+          this._previewMeshTestMSDFMaterial.texture = this._combiner.finalTexture
+          this._previewMeshTestMSDFMaterial.resize(size)
+        }
+      }
+      this._width = size.width
+      this._height = size.height
+    }
   }
 }

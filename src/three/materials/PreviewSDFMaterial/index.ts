@@ -4,9 +4,11 @@ import fragmentShader from './frag.glsl'
 import vertexShader from './vert.glsl'
 
 export default class PreviewSDFMaterial extends RawShaderMaterial {
+  _uSdf: Uniform
   constructor(texture: Texture) {
+    const sdf = new Uniform(texture)
     const uniforms = {
-      sdf: new Uniform(texture)
+      sdf
     }
     super({
       vertexShader,
@@ -17,5 +19,9 @@ export default class PreviewSDFMaterial extends RawShaderMaterial {
       side: DoubleSide,
       transparent: true
     })
+    this._uSdf = sdf
+  }
+  set texture(val: Texture) {
+    this._uSdf.value = val
   }
 }

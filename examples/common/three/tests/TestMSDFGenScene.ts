@@ -4,13 +4,15 @@ import {
   Object3D,
   ShapePath,
   Vector2,
-  Vector3
+  Vector3,
+  Box2
 } from 'three'
 import { parseSVGPath, makeSvgShapeMeshes } from '../../../../src/three/utils/svgHelpers'
 import { makeTtfShapeMeshes } from '../../../../src/three/utils/ttfHelpers'
 import SDFCurveMesh from '../../../../src/three/meshes/SDFCurveMesh'
 import renderer from '../renderer'
 import { getSharedPlaneBufferGeometry } from '../../../../src/three/utils/geometry'
+import RobotoBold from '../../../fonts/Roboto-Bold.ttf'
 import {
   testFontPathData1,
   testFontPathData2,
@@ -25,6 +27,8 @@ import { lerp, rand } from '../../../../src/utils/math'
 
 import MSDFKit from '../../../../src/three/msdf/MSDFKit'
 import BaseTestScene from './BaseTestScene'
+import TextRenderer from '../../../../src'
+import MDSFAtlas from '../../../../src/three/MSDFAtlas'
 export default class TestMSDFGenScene extends BaseTestScene {
   pivot: Object3D
   msdfKit: MSDFKit
@@ -57,7 +61,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
         if (i === segments - 1 && ci === 0) {
           ci++
         }
-        const curveMesh = new SDFCurveMesh('bezier', 16, 1, 1)
+        const curveMesh = new SDFCurveMesh('bezier', 16, 1, 15)
         // const curveMesh = new SDFCurveMesh(16, colors[ci])
         const x = Math.cos(r) * scale
         const y = Math.sin(r) * scale
@@ -69,6 +73,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
         curveMesh.setHandle1(devia(x, x2, 1 / 3, s), devia(y, y2, 1 / 3, s))
         curveMesh.setHandle2(devia(x, x2, 2 / 3, s), devia(y, y2, 2 / 3, s))
         curveMesh.setAnchor2(x2, y2)
+        curveMesh.transform(new Vector2(32, -32), 1)
         pivot.add(curveMesh)
         msdfKit.add(curveMesh)
         curves.push(curveMesh)
@@ -76,14 +81,14 @@ export default class TestMSDFGenScene extends BaseTestScene {
       }
     }
 
-    function makeSvgShape(shape: ShapePath, offset: Vector2, scale: number) {
-      for(const curveMesh of makeSvgShapeMeshes(shape, offset, scale)) {
+    function makeSvgShape(shape: ShapePath, padding:number, scale: number, offset: Vector2) {
+      for(const curveMesh of makeSvgShapeMeshes(shape, padding, scale, offset)) {
         pivot.add(curveMesh)
         msdfKit.add(curveMesh)
         curves.push(curveMesh)
       }
     }
-    function makeTtfShape(
+    function makeTtfShapeFloating(
       ttfPath: TtfPathSegment[],
       padding:number,
       windingOrder: 1 | -1,
@@ -96,48 +101,87 @@ export default class TestMSDFGenScene extends BaseTestScene {
         curves.push(curveMesh)
       }
     }
+    function makeTtfShape(
+      ttfPath: TtfPathSegment[],
+      padding:number,
+      windingOrder: 1 | -1
+    ) {
+      const bb = new Box2()
+      const p = new Vector2()
+      for(const seg of ttfPath) {
+        if(seg.x !== undefined) {
+          bb.expandByPoint(p.set(seg.x, seg.y!))
+        }
+        if(seg.x1 !== undefined) {
+          bb.expandByPoint(p.set(seg.x1, seg.y1!))
+        }
+        if(seg.x2 !== undefined) {
+          bb.expandByPoint(p.set(seg.x2, seg.y2!))
+        }
+      }
+      const size = new Vector2()
+      bb.expandByScalar(padding)
+      const offset = new Vector2(-bb.min.x, -bb.max.y)
+      bb.getSize(size)
+      msdfKit.resize(size)
+      for(const curveMesh of makeTtfShapeMeshes(ttfPath, padding, windingOrder, 1, offset)){
+        pivot.add(curveMesh)
+        msdfKit.add(curveMesh)
+        curves.push(curveMesh)
+      }
+    }
     const tests = [
       () => {
-        makeProceduralPolyShape(6, 1.5, 1, 1)
-        makeProceduralPolyShape(4, 0.5, -1, 0.5)
+        makeProceduralPolyShape(6, 15, 1, 1)
+        makeProceduralPolyShape(4, 5, -1, 0.5)
       },
       () => {
-        makeSvgShape(parseSVGPath(testSvgPathData1), new Vector2(10, 10), 0.1)
+        makeSvgShape(parseSVGPath(testSvgPathData1), 8, 1, new Vector2(10, -30))
       },
       () => {
         for (const shapeStr of testSvgPathData2) {
-          makeSvgShape(parseSVGPath(shapeStr), new Vector2(10, 13), 0.1)
+          makeSvgShape(parseSVGPath(shapeStr), 8, 1.5, new Vector2(10, -40))
         }
       },
       () => {
-        makeTtfShape(testFontPathData1, 12, 1, 0.02, new Vector2(340, 80))
+        makeTtfShapeFloating(testFontPathData1, 12, 1, 0.35, new Vector2(-240, -220))
       },
       () => {
         for (const p of testFontPathData2) {
-          makeTtfShape(p.commands, 12, -1, 0.02, new Vector2(440, 180))
+          makeTtfShapeFloating(p.commands, 12, -1, 0.25, new Vector2(-240, -220))
         }
       },
       () => {
         for (const p of testFontPathData3) {
-          makeTtfShape(p.commands, 12, 1, 0.02, new Vector2(40, 120))
+          makeTtfShapeFloating(p.commands, 12, 1, 0.25, new Vector2(40, -240))
         }
       },
       () => {
-        makeTtfShape(
+        makeTtfShapeFloating(
           testFontPathData3[9].commands,
           12,
           1,
-          0.04,
-          new Vector2(140, 120)
+          0.5,
+          new Vector2(-150, -220)
         )
       },
       () => {
         makeTtfShape(
           testTtfPathData,
-          12,
-          1,
-          0.02,
-          new Vector2(0, 0)
+          6,
+          1
+        )
+      },
+      async () => {
+        const atlas = new MDSFAtlas(1024, msdfKit)
+        const textRenderer = new TextRenderer({atlas})
+
+        textRenderer.addFont('Roboto-Bold', RobotoBold)
+        //TODO use data from textRenderer
+        makeTtfShape(
+          testTtfPathData,
+          6,
+          1
         )
       }
     ]
@@ -150,7 +194,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
     }
 
     this.pivot = pivot
-    pivot.scale.multiplyScalar(0.015)
+    pivot.scale.multiplyScalar(0.0015)
     this.scene.add(pivot)
     this.msdfKit = msdfKit
     const showPrev = (obj: Object3D, x: number, z: number, scale = 0.05) => {
@@ -164,7 +208,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
       msdfKit.render(renderer)
       showPrev(msdfKit.getPreviewMeshChannels(), -0.08, 0, 0.04)
       showPrev(msdfKit.getPreviewMeshMSDF(), 0.13, -0.05)
-      showPrev(msdfKit.getPreviewMeshTestMSDF(), 0.08, 0.05, 0.1)
+      showPrev(msdfKit.getPreviewMeshTestMSDF(), 0.08, 0.03, 0.1)
       // this.thrash = true
     }, 500)
     const groundPlane = new Mesh(
