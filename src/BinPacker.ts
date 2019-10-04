@@ -8,8 +8,15 @@ class Corner extends Vector2 {
     super(x, y)
   }
 }
-
-const __tempVec2 = new Vector2()
+export class PackedBin {
+  constructor(
+    public position: Corner | undefined,
+    public angle: number,
+    public aaBin: Vector2
+  ) {
+    //
+  }
+}
 
 export default class BinPacker {
   private _corners: Corner[] = []
@@ -95,15 +102,14 @@ export default class BinPacker {
     const bestCorner = firstWaste < secondWaste ? bestCorner1 : bestCorner2
 
     let angle = 0
+    const adjustedBin = bin.clone()
     if (bestCorner === bestCorner2) {
-      __tempVec2.set(bin.y, bin.x)
+      adjustedBin.set(bin.y, bin.x)
       angle = Math.PI * 0.5
-    } else {
-      __tempVec2.copy(bin)
     }
-    return { position: bestCorner, angle, aaBin: __tempVec2 }
+    return new PackedBin(bestCorner, angle, adjustedBin)
   }
   private getBest(bin: Vector2) {
-    return { position: this.scoreCorners(bin), angle: 0, aaBin: bin }
+    return new PackedBin(this.scoreCorners(bin), 0, bin)
   }
 }

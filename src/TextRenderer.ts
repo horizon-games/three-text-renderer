@@ -1,16 +1,10 @@
 import { Font, Glyph, Path } from 'opentype.js'
-import {
-  BufferAttribute,
-  BufferGeometry,
-  LinearEncoding,
-  LinearFilter,
-  RGBFormat,
-  WebGLRenderTarget
-} from 'three'
+import { BufferAttribute, BufferGeometry, WebGLRenderer } from 'three'
 
 import FontLoader from './FontLoader'
 import { getTextShaping, Shaping } from './lib/raqm'
 import { TextAlign, TextOptions } from './TextOptions'
+import MSDFAtlas from './three/MSDFAtlas'
 
 export interface ShapedGlyph {
   glyph: Glyph
@@ -33,23 +27,16 @@ const WHITE_SPACE = [' ']
 
 class TextRenderer {
   get texture() {
-    return this._atlasTarget.texture
+    return this._atlas.texture
   }
   fonts: Map<string, FontLoader> = new Map()
   options: TextRendererOptions = {}
   raqm: WebAssembly.WebAssemblyInstantiatedSource | undefined
-  private _atlasTarget: WebGLRenderTarget
+  private _atlas: MSDFAtlas
 
   constructor(options: Partial<TextRendererOptions> = {}) {
     Object.assign(this.options, options)
-
-    this._atlasTarget = new WebGLRenderTarget(2048, 2048, {
-      format: RGBFormat,
-      minFilter: LinearFilter,
-      magFilter: LinearFilter,
-      generateMipmaps: false
-    })
-    this.texture.encoding = LinearEncoding
+    this._atlas = new MSDFAtlas(256)
   }
 
   addFont(key: string, path: string) {
@@ -130,6 +117,7 @@ class TextRenderer {
     const { font } = await this.useFont(options.fontFace)
     const geometry = new BufferGeometry()
     const vertices: number[] = []
+    const uvs: number[] = []
     const indices: number[] = []
 
     const lines = await this.getTextContours(text, options)
@@ -151,6 +139,8 @@ class TextRenderer {
         const bb = path!.getBoundingBox()
         const [xOffset, yOffset] = layoutEngine.next()
 
+        const glyphUvs = this._atlas.addTtfGlyph(shapedGlyph)
+
         vertices.push(
           bb.x1 + xOffset,
           bb.y2 + yOffset,
@@ -166,6 +156,10 @@ class TextRenderer {
           z
         )
 
+        for (const v of glyphUvs) {
+          uvs.push(v)
+        }
+
         indices.push(faceIdx + 0, faceIdx + 1, faceIdx + 2)
         indices.push(faceIdx + 0, faceIdx + 2, faceIdx + 3)
       })
@@ -177,10 +171,17 @@ class TextRenderer {
       'position',
       new BufferAttribute(new Float32Array(vertices), 3)
     )
+    geometry.addAttribute('uv', new BufferAttribute(new Float32Array(uvs), 2))
     geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
     geometry.computeBoundingBox()
 
     return geometry
+  }
+  render(renderer: WebGLRenderer) {
+    this._atlas.render(renderer)
+  }
+  getPreviewMeshMSDF() {
+    return this._atlas.getPreviewMeshMSDF()
   }
 
   private _formatLines(lines: Line[], options: TextOptions) {
