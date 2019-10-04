@@ -41,7 +41,7 @@ export default class MDSFAtlas {
       while (this._queue.length > 0) {
         const glyphId = this._queue.shift()!
         const data = this._queueData.get(glyphId)!
-        for (const curveMesh of makeTtfShapeMeshes(data.ttfPath, 8, 1, 0.05)) {
+        for (const curveMesh of makeTtfShapeMeshes(data.ttfPath, 8, 1, 1)) {
           this._msdfKit.add(curveMesh)
         }
         this._msdfKit.render(renderer)

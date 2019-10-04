@@ -27,7 +27,7 @@ const rulerVertical = new Ruler(
   RulerDirection.Vertical
 )
 
-const showAtlasPreview = true
+const showAtlasPreview = false
 
 const checkboxAnimate = document.querySelector(
   'input#animate'
@@ -64,7 +64,6 @@ async function main() {
   scene.add(camera)
   if (showAtlasPreview) {
     const prev = textRenderer.getPreviewMeshMSDF()
-    prev.add(new Mesh(new SphereBufferGeometry(0.5)))
     prev.scale.multiplyScalar(200)
     prev.position.set(100, 100, 400)
     scene.add(prev)

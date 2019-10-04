@@ -20,14 +20,14 @@ import { makeTexturePreviewMaterial } from '../utils/threeUtils'
 
 import DoubleBufferBlitKit from './DoubleBufferBlitKit'
 
-const camScale = 2
+const camScale = 64
 export default class SDFKit {
   private _scene = new Scene()
   private _camera = new OrthographicCamera(
-    -camScale,
+    0,
     camScale,
     -camScale,
-    camScale,
+    0,
     camScale * 2,
     -camScale * 2
   )

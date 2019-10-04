@@ -45,6 +45,7 @@ export default class MSDFKit {
       getCachedUnitPlaneGeometry(),
       makeTexturePreviewMaterial(this._combiner.finalTexture)
     )
+    pm.rotation.x = Math.PI
     pm.renderOrder = 9999
     return pm
   }
