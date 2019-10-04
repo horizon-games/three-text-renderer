@@ -3,6 +3,7 @@ precision highp float;
 uniform vec4 AHHAx;
 uniform vec4 AHHAy;
 uniform float windingOrder;
+uniform float padding;
 attribute vec2 ratioSign;
 
 uniform mat4 projectionMatrix;
@@ -59,7 +60,7 @@ void main() {
 	//this version has wings that reach out beyond the end of the line to make sharp miters (needs improvement or unique geo for miters)
   // pos += tangent * end * (abs(ratioSign.y * 6.0)+0.2) * sign(t-t2);
 
-  float z = ratioSign.y * 2.0;
+  float z = ratioSign.y * padding;
   pos -= vec2(-tangent.y, tangent.x) * z;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos.x, -abs(z), pos.y, 1.0);
   if(end > 0.0) {

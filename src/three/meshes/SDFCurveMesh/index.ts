@@ -14,8 +14,13 @@ function __getCachedGeo(segments: number) {
 
 export default class SDFCurveMesh extends Mesh {
   private _material: SDFCurveMaterial
-  constructor(type: CurveType, segments: number, windingOrder: 1 | -1) {
-    const mat = new SDFCurveMaterial(type, windingOrder)
+  constructor(
+    type: CurveType,
+    segments: number,
+    windingOrder: 1 | -1,
+    padding: number
+  ) {
+    const mat = new SDFCurveMaterial(type, windingOrder, padding)
     const geo = __getCachedGeo(segments)
     super(geo, mat)
     this._material = mat

@@ -8,12 +8,15 @@ export type CurveType = 'bezier' | 'quadratic' | 'linear'
 export default class SDFCurveMaterial extends RawShaderMaterial {
   _vAHHAx: Vector4
   _vAHHAy: Vector4
-  constructor(type: CurveType, windingOrder: 1 | -1) {
+  _uPadding: Uniform
+  constructor(type: CurveType, windingOrder: 1 | -1, padding: number = 1) {
     const vAHHAx = new Vector4(0, 0.25, 1.75, 2)
     const vAHHAy = new Vector4(0, 1, 1, 0)
+    const uPadding = new Uniform(padding)
     const uniforms = {
       AHHAx: new Uniform(vAHHAx),
       AHHAy: new Uniform(vAHHAy),
+      padding: uPadding,
       windingOrder: new Uniform(windingOrder)
     }
     const defines: any = {}
@@ -39,6 +42,7 @@ export default class SDFCurveMaterial extends RawShaderMaterial {
     })
     this._vAHHAx = vAHHAx
     this._vAHHAy = vAHHAy
+    this._uPadding = uPadding
   }
   setAnchor1(x: number, y: number) {
     this._vAHHAx.x = x
@@ -74,5 +78,8 @@ export default class SDFCurveMaterial extends RawShaderMaterial {
     this._vAHHAy.y = (this._vAHHAy.y - offset.y) * scale
     this._vAHHAy.z = (this._vAHHAy.z - offset.y) * scale
     this._vAHHAy.w = (this._vAHHAy.w - offset.y) * scale
+  }
+  set padding(value: number) {
+    this._uPadding.value = value
   }
 }
