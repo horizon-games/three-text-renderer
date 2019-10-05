@@ -2,6 +2,7 @@ import {
   LinearEncoding,
   LinearFilter,
   Mesh,
+  NearestFilter,
   OrthographicCamera,
   RGBAFormat,
   Scene,
@@ -31,7 +32,11 @@ export default class MSDFCombinerKit {
   private _camera = new OrthographicCamera(-1, 1, -1, 1, -1, 1)
   private _material: MSDFCombinerMaterial
   private _finalTarget: WebGLRenderTarget
-  constructor(private _width = 64, private _height = 64) {
+  constructor(
+    private _width = 64,
+    private _height = 64,
+    private _smoothForDirectUse = true
+  ) {
     this._finalTarget = this.regenerateRenderTarget(_width, _height)
 
     const material = new MSDFCombinerMaterial()
@@ -56,11 +61,12 @@ export default class MSDFCombinerKit {
     }
   }
   private regenerateRenderTarget(width: number, height: number) {
+    const filter = this._smoothForDirectUse ? LinearFilter : NearestFilter
     const finalTarget = new WebGLRenderTarget(width, height, {
       depthBuffer: true,
       stencilBuffer: false,
-      magFilter: LinearFilter,
-      minFilter: LinearFilter,
+      magFilter: filter,
+      minFilter: filter,
       format: RGBAFormat
     })
     finalTarget.texture.encoding = LinearEncoding

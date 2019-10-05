@@ -7,7 +7,7 @@ import {
   WebGLRenderer
 } from 'three'
 
-import { nextHighestPowerOfTwo } from '../../utils/math'
+// import { nextHighestPowerOfTwo } from '../../utils/math'
 import TestMSDFMaterial from '../materials/TestMSDFMaterial'
 import { getCachedUnitPlaneGeometry } from '../utils/geometry'
 import { makeTexturePreviewMaterial } from '../utils/threeUtils'
@@ -33,7 +33,8 @@ export default class MSDFKit {
       this._previewMeshTestMSDFMaterial = new TestMSDFMaterial(
         this._combiner.finalTexture,
         this._width,
-        this._height
+        this._height,
+        this._pixelDensity
       )
     }
     return this._previewMeshTestMSDFMaterial
@@ -43,7 +44,11 @@ export default class MSDFKit {
   private lineCount = 0
   private _previewMeshMSDFMaterial: MeshBasicMaterial | undefined
   private _previewMeshTestMSDFMaterial: TestMSDFMaterial | undefined
-  constructor(private _width = 64, private _height = 64) {
+  constructor(
+    private _width = 64,
+    private _height = 64,
+    private _pixelDensity: number = 1
+  ) {
     const sdfKits: SDFKit[] = []
     for (let i = 0; i < 3; i++) {
       sdfKits.push(new SDFKit(_width, _height))
@@ -99,13 +104,13 @@ export default class MSDFKit {
     }
     return pivot
   }
-  resize(size: Vector2) {
-    // size.width = 16
-    // size.height = 128
-    // size.width = ~~(size.width)
-    // size.height = ~~(size.height)
-    size.width = nextHighestPowerOfTwo(size.width)
-    size.height = nextHighestPowerOfTwo(size.height)
+  resize(size: Vector2, pixelDensity: number) {
+    this._pixelDensity = pixelDensity
+    size.width = Math.ceil(size.width)
+    size.height = Math.ceil(size.height)
+    //TODO size up to next highest power of two, and try to use a small pool of these to prevent creation of hundreds of textures
+    // size.width = nextHighestPowerOfTwo(size.width)
+    // size.height = nextHighestPowerOfTwo(size.height)
     if (this._width !== size.width || this._height !== size.height) {
       if (this._combiner.resize(size)) {
         for (const sdf of this._sdfKits) {
@@ -116,7 +121,7 @@ export default class MSDFKit {
         }
         if (this._previewMeshTestMSDFMaterial) {
           this._previewMeshTestMSDFMaterial.texture = this._combiner.finalTexture
-          this._previewMeshTestMSDFMaterial.resize(size)
+          this._previewMeshTestMSDFMaterial.resize(size, pixelDensity)
         }
       }
       this._width = size.width

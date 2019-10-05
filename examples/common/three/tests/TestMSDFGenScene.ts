@@ -27,7 +27,7 @@ import { lerp, rand } from '../../../../src/utils/math'
 
 import MSDFKit from '../../../../src/three/msdf/MSDFKit'
 import BaseTestScene from './BaseTestScene'
-import TextRenderer from '../../../../src'
+import TextRenderer, { TextDirection, Path } from '../../../../src'
 import MDSFAtlas from '../../../../src/three/MSDFAtlas'
 export default class TestMSDFGenScene extends BaseTestScene {
   pivot: Object3D
@@ -95,7 +95,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
       scale: number,
       offset: Vector2,
     ) {
-      for(const curveMesh of makeTtfShapeMeshes(ttfPath, padding, windingOrder, scale, offset)){
+      for(const curveMesh of makeTtfShapeMeshes(ttfPath, padding, windingOrder, 1, scale, offset)){
         pivot.add(curveMesh)
         msdfKit.add(curveMesh)
         curves.push(curveMesh)
@@ -103,28 +103,37 @@ export default class TestMSDFGenScene extends BaseTestScene {
     }
     function makeTtfShape(
       ttfPath: TtfPathSegment[],
+      pointsPerEm:number,
+      fontSize:number,
       padding:number,
-      windingOrder: 1 | -1
+      pixelDensity: number,
+      windingOrder: 1 | -1,
+      yDir: 1 | -1
     ) {
+      fontSize *= pixelDensity
+      padding *= pixelDensity
       const bb = new Box2()
       const p = new Vector2()
       for(const seg of ttfPath) {
         if(seg.x !== undefined) {
-          bb.expandByPoint(p.set(seg.x, seg.y!))
+          bb.expandByPoint(p.set(seg.x, yDir * seg.y!))
         }
         if(seg.x1 !== undefined) {
-          bb.expandByPoint(p.set(seg.x1, seg.y1!))
+          bb.expandByPoint(p.set(seg.x1, yDir * seg.y1!))
         }
         if(seg.x2 !== undefined) {
-          bb.expandByPoint(p.set(seg.x2, seg.y2!))
+          bb.expandByPoint(p.set(seg.x2, yDir * seg.y2!))
         }
       }
+      const prescale = fontSize / pointsPerEm
       const size = new Vector2()
+      bb.min.multiplyScalar(prescale)
+      bb.max.multiplyScalar(prescale)
       bb.expandByScalar(padding)
       const offset = new Vector2(-bb.min.x, -bb.max.y)
       bb.getSize(size)
-      msdfKit.resize(size)
-      for(const curveMesh of makeTtfShapeMeshes(ttfPath, padding, windingOrder, 1, offset)){
+      msdfKit.resize(size, pixelDensity)
+      for(const curveMesh of makeTtfShapeMeshes(ttfPath, padding, windingOrder, yDir, prescale, offset)){
         pivot.add(curveMesh)
         msdfKit.add(curveMesh)
         curves.push(curveMesh)
@@ -140,20 +149,20 @@ export default class TestMSDFGenScene extends BaseTestScene {
       },
       () => {
         for (const shapeStr of testSvgPathData2) {
-          makeSvgShape(parseSVGPath(shapeStr), 8, 1.5, new Vector2(10, -40))
+          makeSvgShape(parseSVGPath(shapeStr), 8, 1.5, new Vector2(15, -60))
         }
       },
       () => {
-        makeTtfShapeFloating(testFontPathData1, 12, 1, 0.35, new Vector2(-240, -220))
+        makeTtfShapeFloating(testFontPathData1, 12, 1, 0.35, new Vector2(-90, -75))
       },
       () => {
         for (const p of testFontPathData2) {
-          makeTtfShapeFloating(p.commands, 12, -1, 0.25, new Vector2(-240, -220))
+          makeTtfShapeFloating(p.commands, 12, -1, 0.25, new Vector2(-60, -55))
         }
       },
       () => {
         for (const p of testFontPathData3) {
-          makeTtfShapeFloating(p.commands, 12, 1, 0.25, new Vector2(40, -240))
+          makeTtfShapeFloating(p.commands, 12, 1, 0.25, new Vector2(10, -60))
         }
       },
       () => {
@@ -162,27 +171,58 @@ export default class TestMSDFGenScene extends BaseTestScene {
           12,
           1,
           0.5,
-          new Vector2(-150, -220)
+          new Vector2(-75, -110)
         )
       },
       () => {
         makeTtfShape(
           testTtfPathData,
+          1,
+          1,
           6,
+          1,
+          1,
           1
         )
       },
       async () => {
-        const atlas = new MDSFAtlas(1024, msdfKit)
+        const atlas = new MDSFAtlas(1024, 2, msdfKit)
         const textRenderer = new TextRenderer({atlas})
 
         textRenderer.addFont('Roboto-Bold', RobotoBold)
-        //TODO use data from textRenderer
-        makeTtfShape(
-          testTtfPathData,
-          6,
-          1
-        )
+        const fontSize = 16
+        const padding = 2
+        const pixelDensity = 2
+        const result = await textRenderer.getShapedGlyphs('A', {
+          fontFace:'Roboto-Bold',
+          fontSize,
+          lang: 'en',
+          direction: TextDirection.LTR
+        })
+        const path = result[0].glyphs[0].glyph.path
+        if(path instanceof Path) {
+          makeTtfShape(
+            path.commands as TtfPathSegment[],
+            path.unitsPerEm,
+            fontSize,
+            padding,
+            pixelDensity,
+            1,
+            -1
+          )
+        } else {
+          //Not sure when this would get executed
+          const p = path()
+          makeTtfShape(
+            p.commands as TtfPathSegment[],
+            p.unitsPerEm,
+            fontSize,
+            padding,
+            pixelDensity,
+            1,
+            -1
+          )
+        }
       }
     ]
 

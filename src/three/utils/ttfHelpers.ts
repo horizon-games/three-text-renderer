@@ -9,42 +9,37 @@ export function makeTtfShapeMeshes(
   ttfPath: TtfPathSegment[],
   padding: number = 2,
   windingOrder: 1 | -1 = 1,
+  yDir: 1 | -1 = 1,
   scale: number = 1,
   offset?: Vector2
 ) {
-  const scaledPadding = padding * scale
   const meshes: SDFCurveMesh[] = []
   const cursor = new Vector2()
   for (const seg of ttfPath) {
     let curveMesh: SDFCurveMesh | undefined
     switch (seg.type) {
       case 'M':
-        cursor.set(seg.x!, seg.y!)
+        cursor.set(seg.x!, yDir * seg.y!)
         break
       case 'C':
-        curveMesh = new SDFCurveMesh('bezier', 16, windingOrder, scaledPadding)
+        curveMesh = new SDFCurveMesh('bezier', 16, windingOrder, padding)
         curveMesh.setAnchor1v(cursor)
-        curveMesh.setHandle1(seg.x1!, seg.y1!)
-        curveMesh.setHandle2(seg.x2!, seg.y2!)
-        cursor.set(seg.x!, seg.y!)
+        curveMesh.setHandle1(seg.x1!, yDir * seg.y1!)
+        curveMesh.setHandle2(seg.x2!, yDir * seg.y2!)
+        cursor.set(seg.x!, yDir * seg.y!)
         curveMesh.setAnchor2v(cursor)
         break
       case 'Q':
-        curveMesh = new SDFCurveMesh(
-          'quadratic',
-          16,
-          windingOrder,
-          scaledPadding
-        )
+        curveMesh = new SDFCurveMesh('quadratic', 16, windingOrder, padding)
         curveMesh.setAnchor1v(cursor)
-        curveMesh.setHandle1(seg.x1!, seg.y1!)
-        cursor.set(seg.x!, seg.y!)
+        curveMesh.setHandle1(seg.x1!, yDir * seg.y1!)
+        cursor.set(seg.x!, yDir * seg.y!)
         curveMesh.setAnchor2v(cursor)
         break
       case 'L':
-        curveMesh = new SDFCurveMesh('linear', 2, windingOrder, scaledPadding)
+        curveMesh = new SDFCurveMesh('linear', 2, windingOrder, padding)
         curveMesh.setAnchor1v(cursor)
-        cursor.set(seg.x!, seg.y!)
+        cursor.set(seg.x!, yDir * seg.y!)
         curveMesh.setAnchor2v(cursor)
         break
       case 'Z':
