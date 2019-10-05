@@ -60,7 +60,8 @@ async function main() {
         lineHeight: textEditor.lineHeight,
         letterSpacing: textEditor.letterSpacing,
         maxWidth: textEditor.maxWidth,
-        maxHeight: textEditor.maxHeight
+        maxHeight: textEditor.maxHeight,
+        yDir: 1
       },
       true
     )

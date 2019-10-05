@@ -26,6 +26,7 @@ export interface TextOptions {
   letterSpacing?: number
   maxWidth?: number
   maxHeight?: number
+  yDir: 1 | -1
   // color: Color | Gradient | string | number
   // align: 'left' | 'center' | 'right'
   // vAlign: 'top' | 'center' | 'bottom'

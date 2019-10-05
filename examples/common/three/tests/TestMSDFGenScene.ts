@@ -200,7 +200,8 @@ export default class TestMSDFGenScene extends BaseTestScene {
           fontFace:'Amiri-Bold',
           fontSize,
           lang: 'en',
-          direction: TextDirection.LTR
+          direction: TextDirection.LTR,
+          yDir: 1
         })
         const path = result[0].glyphs[0].glyph.path
         if(path instanceof Path) {

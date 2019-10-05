@@ -141,8 +141,14 @@ class TextRenderer {
         const { path } = shapedGlyph
         const bb = path!.getBoundingBox()
         const [xOffset, yOffset] = layoutEngine.next()
-
-        const glyphUvs = this._atlas.addTtfGlyph(shapedGlyph)
+        const padding = 6
+        debugger
+        const glyphUvs = this._atlas.addTtfGlyph(
+          shapedGlyph,
+          options.fontSize,
+          padding,
+          options.yDir
+        )
 
         vertices.push(
           bb.x1 + xOffset,

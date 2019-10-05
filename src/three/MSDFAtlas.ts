@@ -10,10 +10,15 @@ import TextureAtlas from './TextureAtlas'
 import { getCachedUnitPlaneGeometry } from './utils/geometry'
 import { makeTexturePreviewMaterial } from './utils/threeUtils'
 import { makeTtfShapeMeshes } from './utils/ttfHelpers'
+// import { Path } from 'opentype.js'
 
 class QueuedGlyph {
   constructor(
     public glyph: string,
+    public fontSize: number,
+    public padding: number,
+    public prescale: number,
+    public yDir: 1 | -1,
     public size: Vector2,
     public ttfPath: TtfPathSegment[],
     public packInfo: PackedBin,
@@ -72,7 +77,13 @@ export default class MDSFAtlas {
       while (this._queue.length > 0) {
         const glyphId = this._queue.shift()!
         const data = this._queueData.get(glyphId)!
-        for (const curveMesh of makeTtfShapeMeshes(data.ttfPath, 8, 1, 1)) {
+        for (const curveMesh of makeTtfShapeMeshes(
+          data.ttfPath,
+          data.padding,
+          1,
+          data.yDir,
+          data.prescale
+        )) {
           this._msdfKit.add(curveMesh)
         }
         this._msdfKit.render(renderer)
@@ -95,9 +106,14 @@ export default class MDSFAtlas {
     pm.renderOrder = 9999
     return pm
   }
-  addTtfGlyph(shapedGlyph: ShapedGlyph) {
+  addTtfGlyph(
+    shapedGlyph: ShapedGlyph,
+    fontSize: number,
+    padding: number,
+    yDir: 1 | -1
+  ) {
     const { shaping, path } = shapedGlyph
-    const id = `${shaping.fontIndex}:${shaping.glyphId}`
+    const id = `${shaping.fontIndex}:${shaping.glyphId}:${fontSize}:${padding}`
     if (this._completedData.has(id)) {
       return this._completedData.get(id)!.uvs
     }
@@ -109,10 +125,18 @@ export default class MDSFAtlas {
     const size = new Vector2(bb.x2 - bb.x1, bb.y2 - bb.y1)
     const packInfo = this._atlas.findSpace(size)
     const uvs = [0, 0, 0, 1, 1, 1, 1, 0]
+    //unlike the msdf generator example, the commands in these glyphs are already prescaled
+    const prescale = 1
+    // const path2 = shapedGlyph.glyph.path
+    // const prescale = fontSize / (path2 instanceof Path ? path2.unitsPerEm : path2().unitsPerEm)
     this._queueData.set(
       id,
       new QueuedGlyph(
         id,
+        fontSize,
+        padding,
+        prescale,
+        yDir,
         size,
         path!.commands as TtfPathSegment[],
         packInfo,
