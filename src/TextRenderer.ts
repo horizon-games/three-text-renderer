@@ -142,7 +142,6 @@ class TextRenderer {
         const bb = path!.getBoundingBox()
         const [xOffset, yOffset] = layoutEngine.next()
         const padding = 6
-        debugger
         const glyphUvs = this._atlas.addTtfGlyph(
           shapedGlyph,
           options.fontSize,

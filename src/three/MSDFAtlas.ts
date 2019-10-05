@@ -123,7 +123,7 @@ export default class MDSFAtlas {
     const bb = path!.getBoundingBox()
     this._queue.push(id)
     const size = new Vector2(bb.x2 - bb.x1, bb.y2 - bb.y1)
-    const packInfo = this._atlas.findSpace(size)
+    const packInfo = this._atlas.findSpace(size, false)
     const uvs = [0, 0, 0, 1, 1, 1, 1, 0]
     //unlike the msdf generator example, the commands in these glyphs are already prescaled
     const prescale = 1

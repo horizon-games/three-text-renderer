@@ -27,7 +27,7 @@ export default class TextureAtlas {
     this.texture.encoding = LinearEncoding
     this._binPacker = new BinPacker(size, size)
   }
-  findSpace(size: Vector2) {
-    return this._binPacker.add(size, true)
+  findSpace(size: Vector2, allowRotation:boolean) {
+    return this._binPacker.add(size, allowRotation)
   }
 }
