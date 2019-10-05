@@ -119,7 +119,6 @@ async function main() {
     mesh = new Mesh(
       geometry,
       new MeshBasicMaterial({
-        color: 0xff0000,
         side: DoubleSide,
         map: textRenderer.texture
       })

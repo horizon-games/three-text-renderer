@@ -13,6 +13,7 @@ import SDFCurveMesh from '../../../../src/three/meshes/SDFCurveMesh'
 import renderer from '../renderer'
 import { getSharedPlaneBufferGeometry } from '../../../../src/three/utils/geometry'
 import RobotoBold from '../../../fonts/Roboto-Bold.ttf'
+import AmiriBold from '../../../fonts/Amiri-Bold.ttf'
 import {
   testFontPathData1,
   testFontPathData2,
@@ -190,11 +191,13 @@ export default class TestMSDFGenScene extends BaseTestScene {
         const textRenderer = new TextRenderer({atlas})
 
         textRenderer.addFont('Roboto-Bold', RobotoBold)
+        textRenderer.addFont('Amiri-Bold', AmiriBold)
+
         const fontSize = 16
         const padding = 2
         const pixelDensity = 2
-        const result = await textRenderer.getShapedGlyphs('A', {
-          fontFace:'Roboto-Bold',
+        const result = await textRenderer.getShapedGlyphs('ج', {
+          fontFace:'Amiri-Bold',
           fontSize,
           lang: 'en',
           direction: TextDirection.LTR

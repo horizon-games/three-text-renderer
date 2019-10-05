@@ -1,4 +1,4 @@
-import { Vector2 } from 'three'
+import { Vector2, Vector4 } from 'three'
 
 import { removeFromArray } from './utils/arrayUtils'
 
@@ -15,6 +15,14 @@ export class PackedBin {
     public aaBin: Vector2
   ) {
     //
+  }
+  getViewportData() {
+    return new Vector4(
+      Math.ceil(this.position!.x),
+      Math.ceil(this.position!.y),
+      Math.ceil(this.aaBin.x),
+      Math.ceil(this.aaBin.y)
+    )
   }
 }
 

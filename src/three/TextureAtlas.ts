@@ -14,6 +14,9 @@ export default class TextureAtlas {
   get texture() {
     return this._renderTarget.texture
   }
+  get renderTarget() {
+    return this._renderTarget
+  }
   constructor(size = 2048) {
     this._renderTarget = new WebGLRenderTarget(size, size, {
       format: RGBFormat,

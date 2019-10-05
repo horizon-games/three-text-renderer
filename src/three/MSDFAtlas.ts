@@ -1,11 +1,14 @@
-import { Color, Vector2, WebGLRenderer } from 'three'
+import { Color, Mesh, MeshBasicMaterial, Vector2, WebGLRenderer } from 'three'
 
 import { TtfPathSegment } from '../../examples/common/testFontPathData'
 import { PackedBin } from '../BinPacker'
 import { ShapedGlyph } from '../TextRenderer'
 
+import BlitKit from './msdf/BlitKit'
 import MSDFKit from './msdf/MSDFKit'
 import TextureAtlas from './TextureAtlas'
+import { getCachedUnitPlaneGeometry } from './utils/geometry'
+import { makeTexturePreviewMaterial } from './utils/threeUtils'
 import { makeTtfShapeMeshes } from './utils/ttfHelpers'
 
 class QueuedGlyph {
@@ -18,21 +21,49 @@ class QueuedGlyph {
   ) {
     //
   }
+  getCompleted() {
+    return new CompletedGlyph(this.glyph, this.packInfo, this.uvs)
+  }
+}
+
+class CompletedGlyph {
+  constructor(
+    public glyph: string,
+    public packInfo: PackedBin,
+    public uvs: number[]
+  ) {
+    //
+  }
 }
 
 const msAllowedPerBatch = 5
 const __tempColor = new Color()
 export default class MDSFAtlas {
+  get texture() {
+    return this._atlas.texture
+  }
+  get previewMeshMSDFMaterial() {
+    if (!this._previewMeshMSDFMaterial) {
+      this._previewMeshMSDFMaterial = makeTexturePreviewMaterial(
+        this._atlas.texture
+      )
+    }
+    return this._previewMeshMSDFMaterial
+  }
   private _msdfKit: MSDFKit
   private _atlas: TextureAtlas
   private _queue: string[] = []
   private _queueData = new Map<string, QueuedGlyph>()
-  get texture() {
-    return this._msdfKit.texture
-  }
+  private _completedData = new Map<string, CompletedGlyph>()
+  private _glyphBlitter: BlitKit
+  private _previewMeshMSDFMaterial: MeshBasicMaterial | undefined
   constructor(size = 2048, pixelDensity = 1, msdfKit?: MSDFKit) {
     this._msdfKit = msdfKit || new MSDFKit(64, 64, pixelDensity)
     this._atlas = new TextureAtlas(size)
+    this._glyphBlitter = new BlitKit(
+      this._msdfKit.texture,
+      this._atlas.renderTarget
+    )
   }
   render(renderer: WebGLRenderer) {
     if (this._queue.length > 0) {
@@ -45,7 +76,9 @@ export default class MDSFAtlas {
           this._msdfKit.add(curveMesh)
         }
         this._msdfKit.render(renderer)
+        this._glyphBlitter.render(renderer, data.packInfo.getViewportData())
         this._queueData.delete(glyphId)
+        this._completedData.set(glyphId, data.getCompleted())
         if (performance.now() - timeStart > msAllowedPerBatch) {
           break
         }
@@ -54,12 +87,21 @@ export default class MDSFAtlas {
     }
   }
   getPreviewMeshMSDF() {
-    return this._msdfKit.getPreviewMeshMSDF()
+    const pm = new Mesh(
+      getCachedUnitPlaneGeometry(),
+      this.previewMeshMSDFMaterial
+    )
+    pm.rotation.x = Math.PI
+    pm.renderOrder = 9999
+    return pm
   }
   addTtfGlyph(shapedGlyph: ShapedGlyph) {
     const { shaping, path } = shapedGlyph
     const id = `${shaping.fontIndex}:${shaping.glyphId}`
-    if (this._queue.includes(id)) {
+    if (this._completedData.has(id)) {
+      return this._completedData.get(id)!.uvs
+    }
+    if (this._queueData.has(id)) {
       return this._queueData.get(id)!.uvs
     }
     const bb = path!.getBoundingBox()
