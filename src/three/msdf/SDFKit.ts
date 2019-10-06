@@ -13,7 +13,7 @@ import {
   WebGLRenderTarget
 } from 'three'
 
-import { COLOR_WHITE } from '../colorLibrary'
+import { COLOR_BLACK } from '../colorLibrary'
 import PreviewSDFMaterial from '../materials/PreviewSDFMaterial'
 import SDFCombinerDBMaterial from '../materials/SDFCombinerDBMaterial'
 import { getCachedUnitPlaneGeometry } from '../utils/geometry'
@@ -48,7 +48,7 @@ export default class SDFKit {
     if (lines.length > 0) {
       function clearRT(rt: WebGLRenderTarget) {
         renderer.setRenderTarget(rt)
-        renderer.setClearColor(COLOR_WHITE, 0.0)
+        renderer.setClearColor(COLOR_BLACK, 0.0)
         renderer.clearDepth()
         renderer.clearColor()
       }

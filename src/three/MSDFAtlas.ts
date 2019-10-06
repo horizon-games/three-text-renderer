@@ -73,6 +73,7 @@ export default class MDSFAtlas {
   render(renderer: WebGLRenderer) {
     if (this._queue.length > 0) {
       __tempColor.copy(renderer.getClearColor())
+      // renderer.setClearColor(COLOR_WHITE)
       const timeStart = performance.now()
       while (this._queue.length > 0) {
         const glyphId = this._queue.shift()!
@@ -136,7 +137,7 @@ export default class MDSFAtlas {
       .copy(packInfo.position!)
       .add(packInfo.aaBin)
       .multiplyScalar(1 / this._size)
-    const uvs = [min.x, max.y, min.x, min.y, max.x, min.y, max.x, max.y]
+    const uvs = [min.x, min.y, min.x, max.y, max.x, max.y, max.x, min.y]
     //unlike the msdf generator example, the commands in these glyphs are already prescaled
     const prescale = 1
     // const path2 = shapedGlyph.glyph.path

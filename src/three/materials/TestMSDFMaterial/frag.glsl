@@ -21,13 +21,14 @@ void main() {
 
   float signedDistance = unsignedDistance - 0.5;
 
-  float contrast = (dFdx(vUv.x) + dFdy(vUv.y));
+  float contrast = (dFdx(vUv.x) + dFdy(vUv.y)) * 12.0;
 	// float distanceOpacity = signedDistance;
   
   float alpha = min(1.0, max(0.0, signedDistance / contrast));
   
-  gl_FragColor = vec4(vec3(alpha, alpha, alpha), 1.0);
-  vec2 thresh = step(0.15, fract(vUv*gridSize));
-  gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.5), 0.5 * (1.0 - min(thresh.x, thresh.y)));
+  gl_FragColor = vec4(1.0, 0.0, 0.0, alpha);
+  // gl_FragColor = vec4(vec3(alpha, alpha, alpha), 1.0);
+  // vec2 thresh = step(0.15, fract(vUv*gridSize));
+  // gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.5), 0.5 * (1.0 - min(thresh.x, thresh.y)));
   // gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
 }

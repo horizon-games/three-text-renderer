@@ -12,6 +12,7 @@ import {
   WebGLRenderTarget
 } from 'three'
 
+import { COLOR_BLACK } from '../colorLibrary'
 import MSDFCombinerMaterial from '../materials/MSDFCombinerMaterial'
 import { getCachedClipSurfaceGeometry } from '../utils/geometry'
 
@@ -48,6 +49,7 @@ export default class MSDFCombinerKit {
   }
   render(renderer: WebGLRenderer) {
     renderer.setRenderTarget(this._finalTarget)
+    renderer.setClearColor(COLOR_BLACK)
     renderer.render(this._scene, this._camera)
   }
   resize(size: Vector2) {

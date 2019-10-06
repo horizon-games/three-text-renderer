@@ -15,6 +15,7 @@ import {
 } from 'three'
 import TextEditor from '../common/TextEditor'
 import Ruler, { RulerDirection } from '../common/Ruler'
+import TestMSDFMaterial from '../../src/three/materials/TestMSDFMaterial'
 
 const canvas = document.querySelector('canvas#viewport')! as HTMLCanvasElement
 const rulerHorizontal = new Ruler(
@@ -119,10 +120,10 @@ async function main() {
 
     mesh = new Mesh(
       geometry,
-      new MeshBasicMaterial({
-        side: DoubleSide,
-        map: textRenderer.texture
-      })
+      new TestMSDFMaterial(
+        textRenderer.texture,
+        64, 64, 1
+      )
     )
 
     scene.add(mesh)

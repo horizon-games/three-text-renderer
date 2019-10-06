@@ -18,7 +18,7 @@ export interface DoubleBufferRawShaderMaterial extends RawShaderMaterial {
 
 export default class BlitKit {
   private _scene = new Scene()
-  private _camera = new OrthographicCamera(-1, 1, -1, 1, -1, 1)
+  private _camera = new OrthographicCamera(-1, 1, 1, -1, -1, 1)
   private _material: BasicMapMeshMaterial
   constructor(
     srcTexture: Texture,
