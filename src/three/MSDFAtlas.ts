@@ -9,9 +9,7 @@ import MSDFKit from './msdf/MSDFKit'
 import TextureAtlas from './TextureAtlas'
 import { getCachedUnitPlaneGeometry } from './utils/geometry'
 import { makeTexturePreviewMaterial } from './utils/threeUtils'
-import {
-  makeTtfFontShapeMeshes
-} from './utils/ttfHelpers'
+import { makeTtfFontShapeMeshes } from './utils/ttfHelpers'
 // import { Path } from 'opentype.js'
 
 class QueuedGlyph {
@@ -64,9 +62,9 @@ export default class MDSFAtlas {
   private _completedData = new Map<string, CompletedGlyph>()
   private _glyphBlitter: BlitKit
   private _previewMeshMSDFMaterial: MeshBasicMaterial | undefined
-  constructor(size = 2048, pixelDensity = 1, msdfKit?: MSDFKit) {
+  constructor(private _size = 2048, pixelDensity = 1, msdfKit?: MSDFKit) {
     this._msdfKit = msdfKit || new MSDFKit(64, 64, pixelDensity)
-    this._atlas = new TextureAtlas(size)
+    this._atlas = new TextureAtlas(_size)
     this._glyphBlitter = new BlitKit(
       this._msdfKit.texture,
       this._atlas.renderTarget
@@ -131,7 +129,14 @@ export default class MDSFAtlas {
     this._queue.push(id)
     const size = new Vector2(Math.ceil(bb.x2 - bb.x1), Math.ceil(bb.y2 - bb.y1))
     const packInfo = this._atlas.findSpace(size, false)
-    const uvs = [0, 0, 0, 1, 1, 1, 1, 0]
+    const min = new Vector2()
+      .copy(packInfo.position!)
+      .multiplyScalar(1 / this._size)
+    const max = new Vector2()
+      .copy(packInfo.position!)
+      .add(packInfo.aaBin)
+      .multiplyScalar(1 / this._size)
+    const uvs = [min.x, max.y, min.x, min.y, max.x, min.y, max.x, max.y]
     //unlike the msdf generator example, the commands in these glyphs are already prescaled
     const prescale = 1
     // const path2 = shapedGlyph.glyph.path

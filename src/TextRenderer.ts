@@ -150,17 +150,17 @@ class TextRenderer {
         )
 
         vertices.push(
-          bb.x1 + xOffset,
-          bb.y2 + yOffset,
+          bb.x1 + xOffset - padding,
+          bb.y2 + yOffset + padding,
           z,
-          bb.x1 + xOffset,
-          bb.y1 + yOffset,
+          bb.x1 + xOffset - padding,
+          bb.y1 + yOffset - padding,
           z,
-          bb.x2 + xOffset,
-          bb.y1 + yOffset,
+          bb.x2 + xOffset + padding,
+          bb.y1 + yOffset - padding,
           z,
-          bb.x2 + xOffset,
-          bb.y2 + yOffset,
+          bb.x2 + xOffset + padding,
+          bb.y2 + yOffset + padding,
           z
         )
 
