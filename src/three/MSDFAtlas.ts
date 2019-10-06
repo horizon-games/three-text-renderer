@@ -9,7 +9,9 @@ import MSDFKit from './msdf/MSDFKit'
 import TextureAtlas from './TextureAtlas'
 import { getCachedUnitPlaneGeometry } from './utils/geometry'
 import { makeTexturePreviewMaterial } from './utils/threeUtils'
-import { makeTtfShapeMeshes } from './utils/ttfHelpers'
+import {
+  makeTtfFontShapeMeshes
+} from './utils/ttfHelpers'
 // import { Path } from 'opentype.js'
 
 class QueuedGlyph {
@@ -77,15 +79,20 @@ export default class MDSFAtlas {
       while (this._queue.length > 0) {
         const glyphId = this._queue.shift()!
         const data = this._queueData.get(glyphId)!
-        for (const curveMesh of makeTtfShapeMeshes(
+        const result = makeTtfFontShapeMeshes(
           data.ttfPath,
+          data.fontSize,
+          data.fontSize,
           data.padding,
           1,
-          data.yDir,
-          data.prescale
-        )) {
+          1,
+          data.yDir
+        )
+        for (const curveMesh of result.meshes) {
           this._msdfKit.add(curveMesh)
         }
+        this._msdfKit.resize(result.size, result.pixelDensity)
+        this._glyphBlitter.texture = this._msdfKit.texture
         this._msdfKit.render(renderer)
         this._glyphBlitter.render(renderer, data.packInfo.getViewportData())
         this._queueData.delete(glyphId)
@@ -122,7 +129,7 @@ export default class MDSFAtlas {
     }
     const bb = path!.getBoundingBox()
     this._queue.push(id)
-    const size = new Vector2(bb.x2 - bb.x1, bb.y2 - bb.y1)
+    const size = new Vector2(Math.ceil(bb.x2 - bb.x1), Math.ceil(bb.y2 - bb.y1))
     const packInfo = this._atlas.findSpace(size, false)
     const uvs = [0, 0, 0, 1, 1, 1, 1, 0]
     //unlike the msdf generator example, the commands in these glyphs are already prescaled

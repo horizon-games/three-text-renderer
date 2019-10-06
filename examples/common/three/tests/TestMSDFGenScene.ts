@@ -5,10 +5,9 @@ import {
   ShapePath,
   Vector2,
   Vector3,
-  Box2
 } from 'three'
 import { parseSVGPath, makeSvgShapeMeshes } from '../../../../src/three/utils/svgHelpers'
-import { makeTtfShapeMeshes } from '../../../../src/three/utils/ttfHelpers'
+import { makeTtfRawShapeMeshes, makeTtfFontShapeMeshes } from '../../../../src/three/utils/ttfHelpers'
 import SDFCurveMesh from '../../../../src/three/meshes/SDFCurveMesh'
 import renderer from '../renderer'
 import { getSharedPlaneBufferGeometry } from '../../../../src/three/utils/geometry'
@@ -89,14 +88,14 @@ export default class TestMSDFGenScene extends BaseTestScene {
         curves.push(curveMesh)
       }
     }
-    function makeTtfShapeFloating(
+    function makeTtfShapeRaw(
       ttfPath: TtfPathSegment[],
       padding:number,
       windingOrder: 1 | -1,
       scale: number,
       offset: Vector2,
     ) {
-      for(const curveMesh of makeTtfShapeMeshes(ttfPath, padding, windingOrder, 1, scale, offset)){
+      for(const curveMesh of makeTtfRawShapeMeshes(ttfPath, padding, windingOrder, 1, scale, offset)){
         pivot.add(curveMesh)
         msdfKit.add(curveMesh)
         curves.push(curveMesh)
@@ -111,30 +110,9 @@ export default class TestMSDFGenScene extends BaseTestScene {
       windingOrder: 1 | -1,
       yDir: 1 | -1
     ) {
-      fontSize *= pixelDensity
-      padding *= pixelDensity
-      const bb = new Box2()
-      const p = new Vector2()
-      for(const seg of ttfPath) {
-        if(seg.x !== undefined) {
-          bb.expandByPoint(p.set(seg.x, yDir * seg.y!))
-        }
-        if(seg.x1 !== undefined) {
-          bb.expandByPoint(p.set(seg.x1, yDir * seg.y1!))
-        }
-        if(seg.x2 !== undefined) {
-          bb.expandByPoint(p.set(seg.x2, yDir * seg.y2!))
-        }
-      }
-      const prescale = fontSize / pointsPerEm
-      const size = new Vector2()
-      bb.min.multiplyScalar(prescale)
-      bb.max.multiplyScalar(prescale)
-      bb.expandByScalar(padding)
-      const offset = new Vector2(-bb.min.x, -bb.max.y)
-      bb.getSize(size)
-      msdfKit.resize(size, pixelDensity)
-      for(const curveMesh of makeTtfShapeMeshes(ttfPath, padding, windingOrder, yDir, prescale, offset)){
+      const result = makeTtfFontShapeMeshes(ttfPath, pointsPerEm, fontSize, padding, pixelDensity, windingOrder, yDir)
+      msdfKit.resize(result.size, result.pixelDensity)
+      for(const curveMesh of result.meshes){
         pivot.add(curveMesh)
         msdfKit.add(curveMesh)
         curves.push(curveMesh)
@@ -154,20 +132,20 @@ export default class TestMSDFGenScene extends BaseTestScene {
         }
       },
       () => {
-        makeTtfShapeFloating(testFontPathData1, 12, 1, 0.35, new Vector2(-90, -75))
+        makeTtfShapeRaw(testFontPathData1, 12, 1, 0.35, new Vector2(-90, -75))
       },
       () => {
         for (const p of testFontPathData2) {
-          makeTtfShapeFloating(p.commands, 12, -1, 0.25, new Vector2(-60, -55))
+          makeTtfShapeRaw(p.commands, 12, -1, 0.25, new Vector2(-60, -55))
         }
       },
       () => {
         for (const p of testFontPathData3) {
-          makeTtfShapeFloating(p.commands, 12, 1, 0.25, new Vector2(10, -60))
+          makeTtfShapeRaw(p.commands, 12, 1, 0.25, new Vector2(10, -60))
         }
       },
       () => {
-        makeTtfShapeFloating(
+        makeTtfShapeRaw(
           testFontPathData3[9].commands,
           12,
           1,

@@ -1,11 +1,60 @@
-import { Vector2 } from 'three'
+import { Box2, Vector2 } from 'three'
 
 import { TtfPathSegment } from '../../../examples/common/testFontPathData'
 import SDFCurveMesh from '../meshes/SDFCurveMesh'
 
 const __v2Zero = new Vector2()
 
-export function makeTtfShapeMeshes(
+export function makeTtfFontShapeMeshes(
+  ttfPath: TtfPathSegment[],
+  pointsPerEm: number,
+  fontSize: number,
+  padding: number,
+  pixelDensity: number,
+  windingOrder: 1 | -1,
+  yDir: 1 | -1
+) {
+  const meshes: SDFCurveMesh[] = []
+  fontSize *= pixelDensity
+  padding *= pixelDensity
+  const bb = new Box2()
+  const p = new Vector2()
+  for (const seg of ttfPath) {
+    if (seg.x !== undefined) {
+      bb.expandByPoint(p.set(seg.x, yDir * seg.y!))
+    }
+    if (seg.x1 !== undefined) {
+      bb.expandByPoint(p.set(seg.x1, yDir * seg.y1!))
+    }
+    if (seg.x2 !== undefined) {
+      bb.expandByPoint(p.set(seg.x2, yDir * seg.y2!))
+    }
+  }
+  const prescale = fontSize / pointsPerEm
+  const size = new Vector2()
+  bb.min.multiplyScalar(prescale)
+  bb.max.multiplyScalar(prescale)
+  bb.expandByScalar(padding)
+  const offset = new Vector2(-bb.min.x, -bb.max.y)
+  bb.getSize(size)
+  for (const curveMesh of makeTtfRawShapeMeshes(
+    ttfPath,
+    padding,
+    windingOrder,
+    yDir,
+    prescale,
+    offset
+  )) {
+    meshes.push(curveMesh)
+  }
+  return {
+    meshes,
+    size,
+    pixelDensity
+  }
+}
+
+export function makeTtfRawShapeMeshes(
   ttfPath: TtfPathSegment[],
   padding: number = 2,
   windingOrder: 1 | -1 = 1,
