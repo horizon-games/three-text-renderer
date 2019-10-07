@@ -4,7 +4,10 @@ import { BufferAttribute, BufferGeometry, WebGLRenderer } from 'three'
 import FontLoader from './FontLoader'
 import { getTextShaping, Shaping } from './lib/raqm'
 import { TextAlign, TextOptions } from './TextOptions'
-import MSDFAtlas from './three/MSDFAtlas'
+import { ISDFKit } from './three/msdf/ISDFKit'
+import MSDFKit from './three/msdf/MSDFKit'
+import SDFKit from './three/msdf/SDFKit'
+import SDFAtlas from './three/SDFAtlas'
 
 export interface ShapedGlyph {
   glyph: Glyph
@@ -19,12 +22,25 @@ export interface Line {
 }
 
 interface TextRendererOptions {
-  atlas?: MSDFAtlas
+  atlas?: SDFAtlas
   atlasSize: number
+  sdfMode: 'sdf' | 'msdf'
 }
 
 const BREAK_POINT_SYMBOLS = [' ', ',']
 const WHITE_SPACE = [' ']
+
+function makeISDFKit(
+  mode: 'sdf' | 'msdf',
+  width: number,
+  height: number
+): ISDFKit {
+  if (mode === 'sdf') {
+    return new SDFKit(width, height)
+  } else {
+    return new MSDFKit(width, height)
+  }
+}
 
 class TextRenderer {
   get texture() {
@@ -32,14 +48,21 @@ class TextRenderer {
   }
   fonts: Map<string, FontLoader> = new Map()
   options: TextRendererOptions = {
-    atlasSize: 256
+    atlasSize: 256,
+    sdfMode: 'sdf'
   }
 
-  private _atlas: MSDFAtlas
+  private _atlas: SDFAtlas
 
   constructor(options: Partial<TextRendererOptions> = {}) {
     Object.assign(this.options, options)
-    this._atlas = this.options.atlas || new MSDFAtlas(this.options.atlasSize)
+    this._atlas =
+      this.options.atlas ||
+      new SDFAtlas(
+        this.options.atlasSize,
+        1,
+        makeISDFKit(this.options.sdfMode, 64, 64)
+      )
   }
 
   addFont(key: string, path: string) {
@@ -188,8 +211,8 @@ class TextRenderer {
   render(renderer: WebGLRenderer) {
     this._atlas.render(renderer)
   }
-  getPreviewMeshMSDF() {
-    return this._atlas.getPreviewMeshMSDF()
+  getRawPreviewMesh() {
+    return this._atlas.getRawPreviewMesh()
   }
 
   private _formatLines(lines: Line[], options: TextOptions) {

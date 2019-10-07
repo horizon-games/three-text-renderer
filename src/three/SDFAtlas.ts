@@ -5,6 +5,7 @@ import { PackedBin } from '../BinPacker'
 import { ShapedGlyph } from '../TextRenderer'
 
 import BlitKit from './msdf/BlitKit'
+import { ISDFKit } from './msdf/ISDFKit'
 import MSDFKit from './msdf/MSDFKit'
 import TextureAtlas from './TextureAtlas'
 import { getCachedUnitPlaneGeometry } from './utils/geometry'
@@ -43,26 +44,26 @@ class CompletedGlyph {
 
 const msAllowedPerBatch = 5
 const __tempColor = new Color()
-export default class MDSFAtlas {
+export default class SDFAtlas {
   get texture() {
     return this._atlas.texture
   }
-  get previewMeshMSDFMaterial() {
-    if (!this._previewMeshMSDFMaterial) {
-      this._previewMeshMSDFMaterial = makeTexturePreviewMaterial(
+  get getRawPreviewMaterial() {
+    if (!this._getRawPreviewMaterial) {
+      this._getRawPreviewMaterial = makeTexturePreviewMaterial(
         this._atlas.texture
       )
     }
-    return this._previewMeshMSDFMaterial
+    return this._getRawPreviewMaterial
   }
-  private _msdfKit: MSDFKit
+  private _msdfKit: ISDFKit
   private _atlas: TextureAtlas
   private _queue: string[] = []
   private _queueData = new Map<string, QueuedGlyph>()
   private _completedData = new Map<string, CompletedGlyph>()
   private _glyphBlitter: BlitKit
-  private _previewMeshMSDFMaterial: MeshBasicMaterial | undefined
-  constructor(private _size = 2048, pixelDensity = 1, msdfKit?: MSDFKit) {
+  private _getRawPreviewMaterial: MeshBasicMaterial | undefined
+  constructor(private _size = 2048, pixelDensity = 1, msdfKit?: ISDFKit) {
     this._msdfKit = msdfKit || new MSDFKit(64, 64, pixelDensity)
     this._atlas = new TextureAtlas(_size)
     this._glyphBlitter = new BlitKit(
@@ -103,10 +104,10 @@ export default class MDSFAtlas {
       renderer.setClearColor(__tempColor)
     }
   }
-  getPreviewMeshMSDF() {
+  getRawPreviewMesh() {
     const pm = new Mesh(
       getCachedUnitPlaneGeometry(),
-      this.previewMeshMSDFMaterial
+      this.getRawPreviewMaterial
     )
     pm.rotation.x = Math.PI
     pm.renderOrder = 9999

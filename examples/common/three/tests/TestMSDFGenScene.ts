@@ -28,15 +28,32 @@ import { lerp, rand } from '../../../../src/utils/math'
 import MSDFKit from '../../../../src/three/msdf/MSDFKit'
 import BaseTestScene from './BaseTestScene'
 import TextRenderer, { TextDirection, Path } from '../../../../src'
-import MDSFAtlas from '../../../../src/three/MSDFAtlas'
+import SDFAtlas from '../../../../src/three/SDFAtlas'
+import SDFKit from '../../../../src/three/msdf/SDFKit'
+import { getUrlParam } from '../../utils/location'
+import { ISDFKit } from '../../../../src/three/msdf/ISDFKit'
+
+let sdfMode: 'sdf' | 'msdf' = 'sdf'
+if(getUrlParam('sdfMode') === 'msdf') {
+  sdfMode = 'msdf'
+}
+
+function makeISDFKit(mode:'sdf' | 'msdf', width:number, height:number, pixelDensity:number):ISDFKit {
+  if(mode === 'sdf') {
+    return new SDFKit(width, height, pixelDensity, true)
+  } else {
+    return new MSDFKit(width, height, pixelDensity)
+  }
+}
+
 export default class TestMSDFGenScene extends BaseTestScene {
   pivot: Object3D
-  msdfKit: MSDFKit
+  sdfKit: ISDFKit
   thrash: boolean = false
   curves: SDFCurveMesh[] = []
   constructor(testId = 4) {
     super()
-    const msdfKit = new MSDFKit()
+    const sdfKit = makeISDFKit(sdfMode, 64, 64, 1)
 
     this.camera.position.z -= 0.2
     this.camera.position.y += 0.1
@@ -75,7 +92,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
         curveMesh.setAnchor2(x2, y2)
         curveMesh.transform(new Vector2(32, -32), 1)
         pivot.add(curveMesh)
-        msdfKit.add(curveMesh)
+        sdfKit.add(curveMesh)
         curves.push(curveMesh)
         // if(i === 2) break
       }
@@ -84,7 +101,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
     function makeSvgShape(shape: ShapePath, padding:number, scale: number, offset: Vector2) {
       for(const curveMesh of makeSvgShapeMeshes(shape, padding, scale, offset)) {
         pivot.add(curveMesh)
-        msdfKit.add(curveMesh)
+        sdfKit.add(curveMesh)
         curves.push(curveMesh)
       }
     }
@@ -97,7 +114,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
     ) {
       for(const curveMesh of makeTtfRawShapeMeshes(ttfPath, padding, windingOrder, 1, scale, offset)){
         pivot.add(curveMesh)
-        msdfKit.add(curveMesh)
+        sdfKit.add(curveMesh)
         curves.push(curveMesh)
       }
     }
@@ -111,10 +128,10 @@ export default class TestMSDFGenScene extends BaseTestScene {
       yDir: 1 | -1
     ) {
       const result = makeTtfFontShapeMeshes(ttfPath, pointsPerEm, fontSize, padding, pixelDensity, windingOrder, yDir)
-      msdfKit.resize(result.size, result.pixelDensity)
+      sdfKit.resize(result.size, result.pixelDensity)
       for(const curveMesh of result.meshes){
         pivot.add(curveMesh)
-        msdfKit.add(curveMesh)
+        sdfKit.add(curveMesh)
         curves.push(curveMesh)
       }
     }
@@ -165,7 +182,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
         )
       },
       async () => {
-        const atlas = new MDSFAtlas(1024, 2, msdfKit)
+        const atlas = new SDFAtlas(1024, 2, sdfKit)
         const textRenderer = new TextRenderer({atlas})
 
         textRenderer.addFont('Roboto-Bold', RobotoBold)
@@ -218,7 +235,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
     this.pivot = pivot
     pivot.scale.multiplyScalar(0.0015)
     this.scene.add(pivot)
-    this.msdfKit = msdfKit
+    this.sdfKit = sdfKit
     const showPrev = (obj: Object3D, x: number, z: number, scale = 0.05) => {
       obj.scale.multiplyScalar(scale)
       obj.position.x = x
@@ -227,10 +244,10 @@ export default class TestMSDFGenScene extends BaseTestScene {
       this.scene.add(obj)
     }
     setTimeout(() => {
-      msdfKit.render(renderer)
-      showPrev(msdfKit.getPreviewMeshChannels(), -0.08, 0, 0.04)
-      showPrev(msdfKit.getPreviewMeshMSDF(), 0.13, -0.05)
-      showPrev(msdfKit.getPreviewMeshTestMSDF(), 0.08, 0.03, 0.1)
+      sdfKit.render(renderer)
+      showPrev(sdfKit.getRawPreviewMesh(), 0.13, -0.05)
+      showPrev(sdfKit.getChannelsPreviewMesh(), -0.08, 0, 0.04)
+      showPrev(sdfKit.getSDFTestPreviewMesh(), 0.08, 0.03, 0.1)
       // this.thrash = true
     }, 500)
     const groundPlane = new Mesh(
@@ -250,7 +267,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
     super.update(dt)
     this.pivot.rotation.y += dt * 0.1
     if (this.thrash) {
-      this.msdfKit.render(renderer)
+      this.sdfKit.render(renderer)
     }
   }
 }

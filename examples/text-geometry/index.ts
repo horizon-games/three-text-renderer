@@ -16,6 +16,7 @@ import {
 import TextEditor from '../common/TextEditor'
 import Ruler, { RulerDirection } from '../common/Ruler'
 import TestMSDFMaterial from '../../src/three/materials/TestMSDFMaterial'
+import { getUrlParam } from '../common/utils/location'
 
 const canvas = document.querySelector('canvas#viewport')! as HTMLCanvasElement
 const rulerHorizontal = new Ruler(
@@ -34,8 +35,15 @@ const checkboxAtlasPreview = document.querySelector(
   'input#atlas-preview'
 )! as HTMLInputElement
 
+let sdfMode: 'sdf' | 'msdf' = 'sdf'
+if(getUrlParam('sdfMode') === 'msdf') {
+  sdfMode = 'msdf'
+}
+
 async function main() {
-  const textRenderer = new TextRenderer()
+  const textRenderer = new TextRenderer({
+    sdfMode
+  })
 
   textRenderer.addFont('Roboto-Bold', RobotoBold)
   textRenderer.addFont('Barlow-Bold', BarlowBold)
@@ -64,7 +72,7 @@ async function main() {
   camera.position.z = 5
   scene.add(camera)
   //if (showAtlasPreview) {
-  const preview = textRenderer.getPreviewMeshMSDF()
+  const preview = textRenderer.getRawPreviewMesh()
   preview.scale.multiplyScalar(200)
   preview.position.set(100, 100, 400)
   scene.add(preview)
@@ -122,7 +130,9 @@ async function main() {
       geometry,
       new TestMSDFMaterial(
         textRenderer.texture,
-        64, 64, 1
+        64, 64, 1,
+        0.05,
+        sdfMode
       )
     )
 

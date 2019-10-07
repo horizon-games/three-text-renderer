@@ -1,5 +1,6 @@
 import {
   LinearEncoding,
+  LinearFilter,
   Mesh,
   NearestFilter,
   OrthographicCamera,
@@ -18,12 +19,13 @@ export interface DoubleBufferRawShaderMaterial extends RawShaderMaterial {
   newTexture: Texture
 }
 
-function nrt(width: number, height: number) {
+function nrt(width: number, height: number, smoothForDirectUse: boolean) {
+  const filter = smoothForDirectUse ? LinearFilter : NearestFilter
   const rt = new WebGLRenderTarget(width, height, {
     depthBuffer: true,
     stencilBuffer: false,
-    magFilter: NearestFilter,
-    minFilter: NearestFilter,
+    magFilter: filter,
+    minFilter: filter,
     format: RGBAFormat
   })
   rt.texture.encoding = LinearEncoding
@@ -38,8 +40,9 @@ export default class DoubleBufferBlitKit {
     private _width = 64,
     private _height = 64,
     private dbMaterial: DoubleBufferRawShaderMaterial,
-    private _rt = nrt(_width, _height),
-    private _rt2 = nrt(_width, _height)
+    private _smoothForDirectUse: boolean,
+    private _rt = nrt(_width, _height, _smoothForDirectUse),
+    private _rt2 = nrt(_width, _height, _smoothForDirectUse)
   ) {
     dbMaterial.backBufferTexture = this._rt.texture
     const surface = new Mesh(getCachedClipSurfaceGeometry(), dbMaterial)
@@ -65,8 +68,8 @@ export default class DoubleBufferBlitKit {
   }
   resize(size: Vector2) {
     if (size.width !== this._width || size.height !== this._height) {
-      this._rt = nrt(size.width, size.height)
-      this._rt2 = nrt(size.width, size.height)
+      this._rt = nrt(size.width, size.height, this._smoothForDirectUse)
+      this._rt2 = nrt(size.width, size.height, this._smoothForDirectUse)
       this.dbMaterial.backBufferTexture = this._rt.texture
       this._width = size.width
       this._height = size.height

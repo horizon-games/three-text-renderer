@@ -20,30 +20,32 @@ export default class MSDFKit {
   get texture() {
     return this._combiner.finalTexture
   }
-  get previewMeshMSDFMaterial() {
-    if (!this._previewMeshMSDFMaterial) {
-      this._previewMeshMSDFMaterial = makeTexturePreviewMaterial(
+  get getRawPreviewMaterial() {
+    if (!this._getRawPreviewMaterial) {
+      this._getRawPreviewMaterial = makeTexturePreviewMaterial(
         this._combiner.finalTexture
       )
     }
-    return this._previewMeshMSDFMaterial
+    return this._getRawPreviewMaterial
   }
-  get previewMeshTestMSDFMaterial() {
-    if (!this._previewMeshTestMSDFMaterial) {
-      this._previewMeshTestMSDFMaterial = new TestMSDFMaterial(
+  get getSDFTestPreviewMaterial() {
+    if (!this._getSDFTestPreviewMaterial) {
+      this._getSDFTestPreviewMaterial = new TestMSDFMaterial(
         this._combiner.finalTexture,
         this._width,
         this._height,
-        this._pixelDensity
+        this._pixelDensity,
+        0.5,
+        'msdf'
       )
     }
-    return this._previewMeshTestMSDFMaterial
+    return this._getSDFTestPreviewMaterial
   }
   private _sdfKits: SDFKit[] = []
   private _combiner: MSDFCombinerKit
   private lineCount = 0
-  private _previewMeshMSDFMaterial: MeshBasicMaterial | undefined
-  private _previewMeshTestMSDFMaterial: TestMSDFMaterial | undefined
+  private _getRawPreviewMaterial: MeshBasicMaterial | undefined
+  private _getSDFTestPreviewMaterial: TestMSDFMaterial | undefined
   constructor(
     private _width = 64,
     private _height = 64,
@@ -67,34 +69,34 @@ export default class MSDFKit {
     for (const sdfKit of this._sdfKits) {
       sdfKit.render(renderer)
     }
-    this._combiner.texture1 = this._sdfKits[0].lastRender
-    this._combiner.texture2 = this._sdfKits[1].lastRender
-    this._combiner.texture3 = this._sdfKits[2].lastRender
+    this._combiner.texture1 = this._sdfKits[0].texture
+    this._combiner.texture2 = this._sdfKits[1].texture
+    this._combiner.texture3 = this._sdfKits[2].texture
     this._combiner.render(renderer)
     renderer.setRenderTarget(null)
   }
 
-  getPreviewMeshMSDF() {
+  getRawPreviewMesh() {
     const pm = new Mesh(
       getCachedUnitPlaneGeometry(),
-      this.previewMeshMSDFMaterial
+      this.getRawPreviewMaterial
     )
     pm.rotation.x = Math.PI
     pm.renderOrder = 9999
     return pm
   }
-  getPreviewMeshTestMSDF() {
+  getSDFTestPreviewMesh() {
     const pm = new Mesh(
       getCachedUnitPlaneGeometry(),
-      this.previewMeshTestMSDFMaterial
+      this.getSDFTestPreviewMaterial
     )
     return pm
   }
-  getPreviewMeshChannels() {
+  getChannelsPreviewMesh() {
     const pivot = new Object3D()
     const previews: Object3D[] = []
     for (const sdfKit of this._sdfKits) {
-      const pm = sdfKit.getPreviewMeshChannels()
+      const pm = sdfKit.getChannelsPreviewMesh()
       previews.push(pm)
       pivot.add(pm)
     }
@@ -114,18 +116,21 @@ export default class MSDFKit {
     if (this._width !== size.width || this._height !== size.height) {
       if (this._combiner.resize(size)) {
         for (const sdf of this._sdfKits) {
-          sdf.resize(size)
+          sdf.resize(size, pixelDensity)
         }
-        if (this._previewMeshMSDFMaterial) {
-          this._previewMeshMSDFMaterial.map = this._combiner.finalTexture
+        if (this._getRawPreviewMaterial) {
+          this._getRawPreviewMaterial.map = this._combiner.finalTexture
         }
-        if (this._previewMeshTestMSDFMaterial) {
-          this._previewMeshTestMSDFMaterial.texture = this._combiner.finalTexture
-          this._previewMeshTestMSDFMaterial.resize(size, pixelDensity)
+        if (this._getSDFTestPreviewMaterial) {
+          this._getSDFTestPreviewMaterial.texture = this._combiner.finalTexture
+          this._getSDFTestPreviewMaterial.resize(size, pixelDensity)
         }
       }
       this._width = size.width
       this._height = size.height
+      return true
+    } else {
+      return false
     }
   }
 }
