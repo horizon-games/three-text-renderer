@@ -11,12 +11,16 @@ import {
   MeshBasicMaterial,
   DoubleSide,
   Vector3,
-  PlaneBufferGeometry
+  PlaneBufferGeometry,
+  EdgesGeometry,
+  LineSegments,
+  LineBasicMaterial
 } from 'three'
 import TextEditor from '../common/TextEditor'
 import Ruler, { RulerDirection } from '../common/Ruler'
 import TestMSDFMaterial from '../../src/three/materials/TestMSDFMaterial'
 import { getUrlParam } from '../common/utils/location'
+import Toggle from '../common/Toggle'
 
 const canvas = document.querySelector('canvas#viewport')! as HTMLCanvasElement
 const rulerHorizontal = new Ruler(
@@ -28,15 +32,14 @@ const rulerVertical = new Ruler(
   RulerDirection.Vertical
 )
 
-const checkboxAnimate = document.querySelector(
-  'input#animate'
-)! as HTMLInputElement
-const checkboxAtlasPreview = document.querySelector(
-  'input#atlas-preview'
-)! as HTMLInputElement
+const toggles = {
+  animate: new Toggle('input#animate'),
+  boundingBox: new Toggle('input#bounding-box'),
+  atlasPreview: new Toggle('input#atlas-preview', false)
+}
 
 let sdfMode: 'sdf' | 'msdf' = 'sdf'
-if(getUrlParam('sdfMode') === 'msdf') {
+if (getUrlParam('sdfMode') === 'msdf') {
   sdfMode = 'msdf'
 }
 
@@ -106,6 +109,8 @@ async function main() {
 
   let mesh: Mesh | undefined
 
+  toggles.boundingBox.onChange(() => update())
+
   async function update() {
     if (mesh) {
       scene.remove(mesh)
@@ -126,35 +131,33 @@ async function main() {
 
     const { maxWidth, maxHeight } = textEditor
 
+    geometry.translate(-maxWidth / 2, -maxHeight / 2, 0)
+
     mesh = new Mesh(
       geometry,
-      new TestMSDFMaterial(
-        textRenderer.texture,
-        64, 64, 1,
-        0.05,
-        sdfMode
-      )
+      new TestMSDFMaterial(textRenderer.texture, 64, 64, 1, 0.05, sdfMode)
     )
 
     scene.add(mesh)
 
-    const boundingMesh = new Mesh(
+    const planeMesh = new Mesh(
       new PlaneBufferGeometry(maxWidth, maxHeight),
       new MeshBasicMaterial({
         color: 0xffffff,
         side: DoubleSide
       })
     )
-    boundingMesh.position.z -= 0.1
-    mesh.add(boundingMesh)
+    planeMesh.position.z -= 0.2
+    mesh.add(planeMesh)
 
-    //const { boundingBox } = geometry
-    //const box = new Box3Helper(boundingBox, new Color(0x0000ff))
-    //const width = Math.abs(boundingBox.min.x - boundingBox.max.x)
-    //const height = Math.abs(boundingBox.min.y - boundingBox.max.y)
-    //mesh.add(box)
-
-    geometry.translate(-maxWidth / 2, -maxHeight / 2, 0)
+    if (toggles.boundingBox.active) {
+      const boundingBoxes = new LineSegments(
+        new EdgesGeometry(geometry),
+        new LineBasicMaterial({ color: 0x0000ff })
+      )
+      boundingBoxes.position.z -= 0.1
+      mesh.add(boundingBoxes)
+    }
 
     mesh.position.x += maxWidth / 2
     mesh.position.y += maxHeight / 2
@@ -173,7 +176,7 @@ async function main() {
       rotation.y = Math.sin(frameCount / 100) / 2
       rotation.x = Math.sin(frameCount / 400) / 2
 
-      if (checkboxAnimate.checked) {
+      if (toggles.animate.active) {
         mesh.rotation.setFromVector3(rotation)
       } else {
         frameCount = 0
@@ -181,7 +184,7 @@ async function main() {
       }
     }
 
-    preview.visible = checkboxAtlasPreview.checked
+    preview.visible = toggles.atlasPreview.active
 
     textRenderer.render(renderer)
 
