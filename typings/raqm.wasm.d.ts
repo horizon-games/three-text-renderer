@@ -43,7 +43,13 @@ declare module '*raqm.wasm' {
     hb_font_create: (face: FacePtr) => FontPtr
     hb_font_destroy: (font: FontPtr) => void
     hb_font_set_scale: (font: FontPtr, x_scale: number, y_scale: number) => void
-
+    hb_ot_glyph_get_outline_path: (
+      font: FontPtr,
+      glyphId: number,
+      start_offset: number,
+      glyph_path_len_ptr: Ptr,
+      glyph_path_ptr: Ptr
+    ) => number
     raqm_create: () => RqPtr
     raqm_destroy: (rq: RqPtr) => void
     raqm_get_glyphs: (rq: RqPtr, len: number) => RqGlyphPtr

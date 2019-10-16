@@ -1,8 +1,8 @@
-import { Font, Glyph, Path } from 'opentype.js'
+import { Font, Glyph } from 'opentype.js'
 import { BufferAttribute, BufferGeometry, WebGLRenderer } from 'three'
 
 import FontLoader from './FontLoader'
-import { getTextShaping, Shaping } from './lib/raqm'
+import { getTextShaping, Path, Shaping } from './lib/raqm'
 import { TextAlign, TextOptions } from './TextOptions'
 import { ISDFKit } from './three/msdf/ISDFKit'
 import MSDFKit from './three/msdf/MSDFKit'
@@ -132,7 +132,14 @@ class TextRenderer {
       line.glyphs.forEach(shapedGlyph => {
         const [x, y] = layout ? layoutEngine.next() : [0, 0]
 
-        shapedGlyph.path = shapedGlyph.glyph.getPath(x, y, fontSize, {}, font)
+        //shapedGlyph.otpath = shapedGlyph.glyph.getPath(x, y, fontSize, {}, font)
+        shapedGlyph.path = transformPath(
+          shapedGlyph.shaping.path!,
+          font,
+          x,
+          y,
+          fontSize
+        )
       })
     })
 
@@ -410,6 +417,48 @@ class LayoutEngine {
 const LINE_BREAK_REGEXP = /\r?\n/
 const splitLines = (text: string): string[] => {
   return text.trim().split(LINE_BREAK_REGEXP)
+}
+
+const transformPath = (
+  path: Path,
+  font: Font,
+  xOffset: number = 0,
+  yOffset: number = 0,
+  fontSize: number = 72
+): Path => {
+  const { commands } = path
+  const scale = (1 / (font.unitsPerEm || 1000)) * fontSize
+  const xScale = scale
+  const yScale = scale
+  const p = new Path()
+
+  for (const cmd of commands) {
+    if (cmd.type === 'M') {
+      p.moveTo(xOffset + cmd.x * xScale, yOffset + -cmd.y * yScale)
+    } else if (cmd.type === 'L') {
+      p.lineTo(xOffset + cmd.x * xScale, yOffset + -cmd.y * yScale)
+    } else if (cmd.type === 'Q') {
+      p.quadraticTo(
+        xOffset + cmd.cpx * xScale,
+        yOffset + -cmd.cpy * yScale,
+        xOffset + cmd.x * xScale,
+        yOffset + -cmd.y * yScale
+      )
+    } else if (cmd.type === 'C') {
+      p.bezierTo(
+        xOffset + cmd.cp1x * xScale,
+        yOffset + -cmd.cp1y * yScale,
+        xOffset + cmd.cp2x * xScale,
+        yOffset + -cmd.cp2y * yScale,
+        xOffset + cmd.x * xScale,
+        yOffset + -cmd.y * yScale
+      )
+    } else if (cmd.type === 'Z') {
+      p.close()
+    }
+  }
+
+  return p
 }
 
 export default TextRenderer
