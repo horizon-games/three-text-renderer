@@ -48,7 +48,7 @@ class TextRenderer {
   }
   fonts: Map<string, FontLoader> = new Map()
   options: TextRendererOptions = {
-    atlasSize: 256,
+    atlasSize: 1024,
     sdfMode: 'sdf'
   }
 
@@ -148,10 +148,6 @@ class TextRenderer {
 
     const lines = await this.getTextContours(text, options)
 
-    /// -------------------------------------------------------------
-    // XXX: Hey Tom, this is where you can process these glyph lines.
-    // --------------------------------------------------------------
-
     const layoutEngine = new LayoutEngine(lines, options, font)
 
     let currIdx = 0
@@ -166,6 +162,7 @@ class TextRenderer {
         const [xOffset, yOffset] = layoutEngine.next()
         const padding = 6
         const glyphUvs = this._atlas.addTtfGlyph(
+          font.getEnglishName('fullName'),
           shapedGlyph,
           options.fontSize,
           padding,

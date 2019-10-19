@@ -71,7 +71,7 @@ export function makeTtfRawShapeMeshes(
         cursor.set(seg.x!, yDir * seg.y!)
         break
       case 'C':
-        curveMesh = new SDFCurveMesh('bezier', 16, windingOrder, padding)
+        curveMesh = new SDFCurveMesh('bezier', 32, windingOrder, padding)
         curveMesh.setAnchor1v(cursor)
         curveMesh.setHandle1(seg.x1!, yDir * seg.y1!)
         curveMesh.setHandle2(seg.x2!, yDir * seg.y2!)
@@ -79,14 +79,14 @@ export function makeTtfRawShapeMeshes(
         curveMesh.setAnchor2v(cursor)
         break
       case 'Q':
-        curveMesh = new SDFCurveMesh('quadratic', 16, windingOrder, padding)
+        curveMesh = new SDFCurveMesh('quadratic', 32, windingOrder, padding)
         curveMesh.setAnchor1v(cursor)
         curveMesh.setHandle1(seg.x1!, yDir * seg.y1!)
         cursor.set(seg.x!, yDir * seg.y!)
         curveMesh.setAnchor2v(cursor)
         break
       case 'L':
-        curveMesh = new SDFCurveMesh('linear', 2, windingOrder, padding)
+        curveMesh = new SDFCurveMesh('linear', 32, windingOrder, padding)
         curveMesh.setAnchor1v(cursor)
         cursor.set(seg.x!, yDir * seg.y!)
         curveMesh.setAnchor2v(cursor)

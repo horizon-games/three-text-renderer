@@ -114,13 +114,14 @@ export default class SDFAtlas {
     return pm
   }
   addTtfGlyph(
+    fontId: string,
     shapedGlyph: ShapedGlyph,
     fontSize: number,
     padding: number,
     yDir: 1 | -1
   ) {
     const { shaping, path } = shapedGlyph
-    const id = `${shaping.fontIndex}:${shaping.glyphId}:${fontSize}:${padding}`
+    const id = `${fontId}:${shaping.fontIndex}:${shaping.glyphId}:${fontSize}:${padding}`
     if (this._completedData.has(id)) {
       return this._completedData.get(id)!.uvs
     }

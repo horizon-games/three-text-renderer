@@ -17,17 +17,15 @@ import {
 
 import { COLOR_BLACK } from '../colorLibrary'
 import PreviewSDFMaterial from '../materials/PreviewSDFMaterial'
-import SDFCombinerDBMaterial from '../materials/SDFCombinerDBMaterial'
 import TestMSDFMaterial from '../materials/TestMSDFMaterial'
 import { getCachedUnitPlaneGeometry } from '../utils/geometry'
 import { makeTexturePreviewMaterial } from '../utils/threeUtils'
 
-import DoubleBufferBlitKit from './DoubleBufferBlitKit'
 import { ISDFKit } from './ISDFKit'
 
 export default class SDFKit implements ISDFKit {
   get texture() {
-    return this._blitKit.backBufferTarget.texture
+    return this._tempTarget.texture
   }
   get getRawPreviewMaterial() {
     if (!this._getRawPreviewMaterial) {
@@ -51,7 +49,6 @@ export default class SDFKit implements ISDFKit {
   private _scene = new Scene()
   private _camera: OrthographicCamera
   private _lineSegments: Mesh[] = []
-  private _blitKit: DoubleBufferBlitKit
   private _tempTarget: WebGLRenderTarget
   private _previewSDFMaterials: PreviewSDFMaterial[] = []
   private _getRawPreviewMaterial: MeshBasicMaterial | undefined
@@ -66,14 +63,6 @@ export default class SDFKit implements ISDFKit {
     this._camera = new OrthographicCamera(0, _width, -_height, 0, 100, -100)
     this._camera.rotation.x = Math.PI * 0.5
     this._scene.add(this._camera)
-    const blitKitMat = new SDFCombinerDBMaterial(tempTarget.texture)
-    const blitKit = new DoubleBufferBlitKit(
-      _width,
-      _height,
-      blitKitMat,
-      _smoothForDirectUse
-    )
-    this._blitKit = blitKit
     this._tempTarget = tempTarget
   }
   add(mesh: Mesh) {
@@ -88,18 +77,16 @@ export default class SDFKit implements ISDFKit {
         renderer.clearDepth()
         renderer.clearColor()
       }
-      clearRT(this._blitKit.backBufferTarget)
-      clearRT(this._blitKit.frontBufferTarget)
       for (const l of lines) {
         clearRT(this._tempTarget)
         this._scene.add(l)
         const mat = l.material as RawShaderMaterial
         mat.depthTest = true
         mat.depthWrite = true
-        renderer.render(this._scene, this._camera)
+      }
+      renderer.render(this._scene, this._camera)
+      for (const l of lines) {
         this._scene.remove(l)
-        this._blitKit.render(renderer)
-        this._blitKit.swap()
       }
       renderer.setRenderTarget(null)
     }
@@ -133,8 +120,6 @@ export default class SDFKit implements ISDFKit {
       meshes.push(pm)
       pivot.add(pm)
     }
-    m(this._blitKit.backBufferTarget.texture, 0)
-    m(this._blitKit.frontBufferTarget.texture, 1)
     m(this._tempTarget.texture, 2)
     for (let i = 0; i < meshes.length; i++) {
       const pm = meshes[i]
@@ -148,8 +133,6 @@ export default class SDFKit implements ISDFKit {
       this._height = size.height
       this._pixelDensity = pixelDensity
       this._tempTarget = this.regenerateRenderTarget(size.width, size.height)
-      this._blitKit.newDataTexture = this._tempTarget.texture
-      this._blitKit.resize(size)
 
       const mats = this._previewSDFMaterials
       function m(t: Texture, i: number) {
@@ -157,8 +140,6 @@ export default class SDFKit implements ISDFKit {
           mats[i].texture = t
         }
       }
-      m(this._blitKit.backBufferTarget.texture, 0)
-      m(this._blitKit.frontBufferTarget.texture, 1)
       m(this._tempTarget.texture, 2)
 
       this._camera.right = size.width

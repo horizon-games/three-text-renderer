@@ -137,8 +137,10 @@ export default class TestMSDFGenScene extends BaseTestScene {
     }
     const tests = [
       () => {
+        // makeProceduralPolyShape(4, 15, 1, 1)
         makeProceduralPolyShape(6, 15, 1, 1)
         makeProceduralPolyShape(4, 5, -1, 0.5)
+        // makeProceduralPolyShape(4, 5, -1, 0.5)
       },
       () => {
         makeSvgShape(parseSVGPath(testSvgPathData1), 8, 1, new Vector2(10, -30))

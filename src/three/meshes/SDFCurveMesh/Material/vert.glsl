@@ -55,16 +55,11 @@ void main() {
 
   float end = step(0.499, abs(t-0.5));
 
-	//this version extends a bit past the end of the line so edges intersect in MSDF
-  pos += tangent * end * 0.1 * sign(t-t2);
-	//this version has wings that reach out beyond the end of the line to make sharp miters (needs improvement or unique geo for miters)
-  // pos += tangent * end * (abs(ratioSign.y * 6.0)+0.2) * sign(t-t2);
+  float amt = end * 40.0 * sign(t-t2);
+  pos += tangent * amt;
 
-  float z = ratioSign.y * padding;
+  float z = ratioSign.y * padding * 10.0;
   pos -= vec2(-tangent.y, tangent.x) * z;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos.x, -abs(z), pos.y, 1.0);
-  if(end > 0.0) {
-    z *= 1.4;
-  }
-  lineInfoTangentXYDistZ = vec3(tangent, -ratioSign.y) * windingOrder * 0.5 + 0.5;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos.x, -abs(z)-abs(amt) * 1.1, pos.y, 1.0);
+  lineInfoTangentXYDistZ = vec3(tangent, -ratioSign.y * 10.0) * windingOrder * 0.5 + 0.5;
 }

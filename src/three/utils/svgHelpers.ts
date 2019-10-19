@@ -522,13 +522,13 @@ export function makeSvgShapeMeshes(
     for (const curve of subPath.curves) {
       let curveMesh: SDFCurveMesh | undefined
       if (curve instanceof CubicBezierCurve) {
-        curveMesh = new SDFCurveMesh('bezier', 16, 1, padding)
+        curveMesh = new SDFCurveMesh('bezier', 32, 1, padding)
         curveMesh.setAnchor1v(curve.v0)
         curveMesh.setHandle1v(curve.v1)
         curveMesh.setHandle2v(curve.v2)
         curveMesh.setAnchor2v(curve.v3)
       } else if (curve instanceof LineCurve) {
-        curveMesh = new SDFCurveMesh('linear', 2, 1, padding)
+        curveMesh = new SDFCurveMesh('linear', 32, 1, padding)
         curveMesh.setAnchor1v(curve.v1)
         curveMesh.setHandle1(
           lerp(curve.v1.x, curve.v2.x, 1 / 3),

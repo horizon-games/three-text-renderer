@@ -2,6 +2,9 @@ import TextRenderer from '../../src/index'
 import RobotoBold from '../fonts/Roboto-Bold.ttf'
 import BarlowBold from '../fonts/Barlow-Bold.ttf'
 import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
+import AmiriBold from '../fonts/Amiri-Bold.ttf'
+import FiraCodeBold from '../fonts/FiraCode-Bold.ttf'
+
 
 import {
   Scene,
@@ -38,7 +41,7 @@ const toggles = {
   atlasPreview: new Toggle('input#atlas-preview', false)
 }
 
-let sdfMode: 'sdf' | 'msdf' = 'sdf'
+let sdfMode: 'sdf' | 'msdf' = 'msdf'
 if (getUrlParam('sdfMode') === 'msdf') {
   sdfMode = 'msdf'
 }
@@ -51,6 +54,9 @@ async function main() {
   textRenderer.addFont('Roboto-Bold', RobotoBold)
   textRenderer.addFont('Barlow-Bold', BarlowBold)
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
+  textRenderer.addFont('Amiri-Bold', AmiriBold)
+  textRenderer.addFont('FiraCode-Bold', FiraCodeBold)
+  
 
   const textEditor = new TextEditor(textRenderer)
   textEditor.onUpdate(update)
