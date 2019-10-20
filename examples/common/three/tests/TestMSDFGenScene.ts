@@ -33,7 +33,7 @@ import SDFKit from '../../../../src/three/msdf/SDFKit'
 import { getUrlParam } from '../../utils/location'
 import { ISDFKit } from '../../../../src/three/msdf/ISDFKit'
 
-let sdfMode: 'sdf' | 'msdf' = 'sdf'
+let sdfMode: 'sdf' | 'msdf' = 'msdf'
 if(getUrlParam('sdfMode') === 'msdf') {
   sdfMode = 'msdf'
 }
