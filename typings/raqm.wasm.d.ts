@@ -39,10 +39,23 @@ declare module '*raqm.wasm' {
     hb_face_create: (blob: BlobPtr, index: number) => FacePtr
     hb_face_destroy: (face: FacePtr) => void
     hb_face_get_glyph_count: (face: FacePtr) => number
+    hb_face_get_upem: (face: FacePtr) => number
 
     hb_font_create: (face: FacePtr) => FontPtr
     hb_font_destroy: (font: FontPtr) => void
     hb_font_set_scale: (font: FontPtr, x_scale: number, y_scale: number) => void
+    hb_font_get_h_extents: (font: FontPtr, fontExtends: Ptr) => void
+
+    hb_ot_glyph_path_create_from_font: (
+      font: FontPtr,
+      glyphId: number
+    ) => number
+    hb_ot_glyph_path_get_coords: (glyphPath: number, tempPtr: number) => number
+    hb_ot_glyph_path_get_commands: (
+      glyphPath: number,
+      tempPtr: number
+    ) => number
+    hb_ot_glyph_path_destroy: (glyph_path: number) => void
 
     raqm_create: () => RqPtr
     raqm_destroy: (rq: RqPtr) => void
