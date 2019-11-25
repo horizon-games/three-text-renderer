@@ -3,7 +3,7 @@ import { BufferAttribute, BufferGeometry } from 'three'
 export default class ClipSurfaceGeometry extends BufferGeometry {
   constructor() {
     super()
-    this.addAttribute(
+    this.setAttribute(
       'position',
       new BufferAttribute(
         new Float32Array([-1, -1, -1, 1, 1, 1, 1, -1]),
@@ -11,7 +11,7 @@ export default class ClipSurfaceGeometry extends BufferGeometry {
         false
       )
     )
-    this.addAttribute(
+    this.setAttribute(
       'uv',
       new BufferAttribute(new Float32Array([0, 0, 0, 1, 1, 1, 1, 0]), 2, false)
     )

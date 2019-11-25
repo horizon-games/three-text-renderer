@@ -776,11 +776,6 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@types/opentype.js@^0.7.2":
-  version "0.7.2"
-  resolved "https://registry.yarnpkg.com/@types/opentype.js/-/opentype.js-0.7.2.tgz#ced5b117a5736578c6b9d835e35b0204c6ef2e8f"
-  integrity sha512-Riz6WyBUBEFs7YqSsJya3SbDHJZ6BmMkY7bzNoue6rtwj+RNilLc+mgOX/eJ0Y0asq16FSU6DatBeOg8ZMy2UQ==
-
 "@types/q@^1.5.1":
   version "1.5.2"
   resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.2.tgz#690a1475b84f2a884fd07cd797c00f5f31356ea8"
@@ -3749,14 +3744,6 @@ onetime@^2.0.0:
   dependencies:
     mimic-fn "^1.0.0"
 
-opentype.js@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/opentype.js/-/opentype.js-1.1.0.tgz#59215beafd92b3f443943ec6198619452f76eb28"
-  integrity sha512-SZimNGuUYrsGPk/nNCaytsrCWDbG+YB+G9Mzc6BM5XiIsIQpkhZa1QvSmNa+eN9xr1n+kBnBJih5YLVBviaJQg==
-  dependencies:
-    string.prototype.codepointat "^0.2.1"
-    tiny-inflate "^1.0.2"
-
 opn@^5.1.0:
   version "5.5.0"
   resolved "https://registry.yarnpkg.com/opn/-/opn-5.5.0.tgz#fc7164fab56d235904c51c3b27da6758ca3b9bfc"
@@ -5058,11 +5045,6 @@ string-width@^1.0.1:
     is-fullwidth-code-point "^2.0.0"
     strip-ansi "^4.0.0"
 
-string.prototype.codepointat@^0.2.1:
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/string.prototype.codepointat/-/string.prototype.codepointat-0.2.1.tgz#004ad44c8afc727527b108cd462b4d971cd469bc"
-  integrity sha512-2cBVCj6I4IOvEnjgO/hWqXjqBGsY+zwPmHl12Srk9IXSZ56Jwwmy+66XO5Iut/oQVR7t5ihYdLB0GMa4alEUcg==
-
 string.prototype.trimleft@^2.0.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/string.prototype.trimleft/-/string.prototype.trimleft-2.1.0.tgz#6cc47f0d7eb8d62b0f3701611715a3954591d634"
@@ -5212,10 +5194,10 @@ terser@^4.1.2:
     source-map "~0.6.1"
     source-map-support "~0.5.12"
 
-three@^0.109.0:
-  version "0.109.0"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.109.0.tgz#611c9ef860d10bd107695cead6c6abcd2422e5fd"
-  integrity sha512-XT99T3Hvgh2CEvwPdHYEunNE+clLK6KiT1U8En7YOgIqTUw4MrLeIc8zxQAJ6wbP8hhJaY5+Cff3jwBPpBa0gA==
+three@^0.110.0:
+  version "0.110.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.110.0.tgz#8719591de1336269113ee79f4268ba247b2324f8"
+  integrity sha512-wlurH8XBO9Sd5VIw8nBa+taLR20kqaI4e9FiuMh6tqK8eOS2q2R+ZoUyufbyDTVTHhs8GiTbv0r2CMLkwerFJg==
 
 through2@^0.6.3:
   version "0.6.5"
@@ -5245,7 +5227,7 @@ timsort@^0.3.0:
   resolved "https://registry.yarnpkg.com/timsort/-/timsort-0.3.0.tgz#405411a8e7e6339fe64db9a234de11dc31e02bd4"
   integrity sha1-QFQRqOfmM5/mTbmiNN4R3DHgK9Q=
 
-tiny-inflate@^1.0.0, tiny-inflate@^1.0.2:
+tiny-inflate@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/tiny-inflate/-/tiny-inflate-1.0.2.tgz#93d9decffc8805bd57eae4310f0b745e9b6fb3a7"
   integrity sha1-k9nez/yIBb1X6uQxDwt0Xptvs6c=
@@ -5400,10 +5382,10 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typescript@^3.6.3:
-  version "3.6.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.6.3.tgz#fea942fabb20f7e1ca7164ff626f1a9f3f70b4da"
-  integrity sha512-N7bceJL1CtRQ2RiG0AQME13ksR7DiuQh/QehubYcghzv20tnh+MQnQIuJddTmsbqYj+dztchykemz0zFzlvdQw==
+typescript@^3.7.2:
+  version "3.7.2"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.7.2.tgz#27e489b95fa5909445e9fef5ee48d81697ad18fb"
+  integrity sha512-ml7V7JfiN2Xwvcer+XAf2csGO1bPBdRbFCkYBczNZggrBZ9c7G3riSUeJmqEU5uOtXNPMhE3n+R4FA/3YOAWOQ==
 
 uncss@^0.17.0:
   version "0.17.2"
