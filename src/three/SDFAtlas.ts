@@ -11,7 +11,6 @@ import TextureAtlas from './TextureAtlas'
 import { getCachedUnitPlaneGeometry } from './utils/geometry'
 import { makeTexturePreviewMaterial } from './utils/threeUtils'
 import { makeTtfFontShapeMeshes } from './utils/ttfHelpers'
-// import { Path } from 'opentype.js'
 
 class QueuedGlyph {
   constructor(

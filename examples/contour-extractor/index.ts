@@ -1,17 +1,13 @@
 import TextRenderer, { Line } from '../../src/index'
-
-import RobotoBold from '../fonts/Roboto-Bold.ttf'
+import Ruler, { RulerDirection } from '../common/Ruler'
+import TextEditor from '../common/TextEditor'
+import AmiriBold from '../fonts/Amiri-Bold.ttf'
 import BarlowBold from '../fonts/Barlow-Bold.ttf'
+import RobotoBold from '../fonts/Roboto-Bold.ttf'
 //import fontPath from '../fonts/FiraCode-Bold.otf'
 //import fontPath from '../fonts/ArefRuqaa-Bold.ttf'
 //import fontPath from '../fonts/Markazi.ttf'
 import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
-import AmiriBold from '../fonts/Amiri-Bold.ttf'
-
-import { Path } from 'opentype.js'
-
-import Ruler, { RulerDirection } from '../common/Ruler'
-import TextEditor from '../common/TextEditor'
 
 const canvas = document.querySelector('canvas#viewport') as HTMLCanvasElement
 const context = canvas.getContext('2d')!
@@ -122,19 +118,18 @@ async function main() {
       context.closePath()
     }
 
+    context.fillStyle = '#000'
+    context.strokeStyle = 'rgba(0, 0, 255, 1)'
+
     lines.forEach(line => {
+      line.glyphs.forEach(glyph => {
+        glyph.path!.draw(context)
+      })
+
       const boundingBoxes = line.glyphs.map(({ path }) =>
         path!.getBoundingBox()
       )
-      const mergedPath = line.glyphs.reduce<Path>((acc, glyph) => {
-        acc.extend(glyph.path!)
-        return acc
-      }, new Path())
 
-      mergedPath.draw(context)
-
-      // Draw bounding boxes
-      context.strokeStyle = 'rgba(0, 0, 255, 1)'
       boundingBoxes.forEach(bb => {
         context.strokeRect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1)
       })

@@ -1,10 +1,9 @@
-import { Font, load } from 'opentype.js'
+import { Font } from './lib/raqm'
 
 export default class FontLoader {
   key: string
   path: string
 
-  private _blob: ArrayBuffer | undefined
   private _font: Font | undefined
   private _loader: Promise<Font> | undefined
   private _isLoaded: boolean = false
@@ -26,28 +25,11 @@ export default class FontLoader {
     return this._font!
   }
 
-  get blob(): ArrayBuffer {
-    if (!this.isLoaded) {
-      throw new Error('FontLoader: Font is not yet loaded. Try `use` first')
-    }
-
-    return this._blob!
-  }
-
   async load() {
     try {
-      this._font = await new Promise(async (resolve, reject) => {
-        this._blob = await fetch(this.path).then(x => x.arrayBuffer())
-
-        load(this.path, (err, font) => {
-          if (err) {
-            reject('Font could not be loaded: ' + err)
-          } else {
-            this._isLoaded = true
-            resolve(font)
-          }
-        })
-      })
+      const fontBuffer = await fetch(this.path).then(x => x.arrayBuffer())
+      this._font = new Font(fontBuffer)
+      this._isLoaded = true
     } catch (err) {
       throw new Error(err)
     }
@@ -62,6 +44,6 @@ export default class FontLoader {
 
     await this._loader
 
-    return { blob: this.blob, font: this.font }
+    return this.font
   }
 }

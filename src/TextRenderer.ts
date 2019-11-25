@@ -1,8 +1,8 @@
-import { Font, Glyph, Path } from 'opentype.js'
 import { BufferAttribute, BufferGeometry, WebGLRenderer } from 'three'
 
 import FontLoader from './FontLoader'
-import { getTextShaping, Shaping } from './lib/raqm'
+import { Font, getTextShaping, Shaping } from './lib/raqm'
+import Path from './Path'
 import { TextAlign, TextOptions } from './TextOptions'
 import { ISDFKit } from './three/msdf/ISDFKit'
 import MSDFKit from './three/msdf/MSDFKit'
@@ -10,7 +10,6 @@ import SDFKit from './three/msdf/SDFKit'
 import SDFAtlas from './three/SDFAtlas'
 
 export interface ShapedGlyph {
-  glyph: Glyph
   shaping: Shaping
   path: Path | undefined
 }
@@ -87,23 +86,20 @@ class TextRenderer {
   }
 
   async getShapedGlyphs(text: string, options: TextOptions): Promise<Line[]> {
-    const {
-      blob,
-      font: { glyphs }
-    } = await this.useFont(options.fontFace)
+    const font = await this.useFont(options.fontFace)
     const textLines = splitLines(text)
 
     return textLines.map(text => {
       const textShaping = getTextShaping(
         text,
-        blob,
+        font,
         options.lang,
         options.direction
       )
 
       return {
         glyphs: textShaping.map(x => ({
-          glyph: glyphs.get(x.glyphId),
+          //glyph: font.glyphs.get(x.glyphId),
           shaping: x,
           path: undefined
         })),
@@ -118,7 +114,7 @@ class TextRenderer {
     options: TextOptions,
     layout: boolean = false
   ): Promise<Line[]> {
-    const { font } = await this.useFont(options.fontFace)
+    const font = await this.useFont(options.fontFace)
     const lines: Line[] = await this.getShapedGlyphs(text, options)
 
     this._formatLines(lines, options)
@@ -132,7 +128,14 @@ class TextRenderer {
       line.glyphs.forEach(shapedGlyph => {
         const [x, y] = layout ? layoutEngine.next() : [0, 0]
 
-        shapedGlyph.path = shapedGlyph.glyph.getPath(x, y, fontSize, {}, font)
+        //shapedGlyph.path = shapedGlyph.glyph.getPath(x, y, fontSize, {}, font)
+        shapedGlyph.path = transformPath(
+          font.glyphs.get(shapedGlyph.shaping.glyphId)!.path!,
+          font,
+          x,
+          y,
+          fontSize
+        )
       })
     })
 
@@ -140,7 +143,7 @@ class TextRenderer {
   }
 
   async createTextGeometry(text: string, options: TextOptions) {
-    const { font } = await this.useFont(options.fontFace)
+    const font = await this.useFont(options.fontFace)
     const geometry = new BufferGeometry()
     const vertices: number[] = []
     const uvs: number[] = []
@@ -162,7 +165,7 @@ class TextRenderer {
         const [xOffset, yOffset] = layoutEngine.next()
         const padding = 6
         const glyphUvs = this._atlas.addTtfGlyph(
-          font.getEnglishName('fullName'),
+          font.name,
           shapedGlyph,
           options.fontSize,
           padding,
@@ -205,9 +208,11 @@ class TextRenderer {
 
     return geometry
   }
+
   render(renderer: WebGLRenderer) {
     this._atlas.render(renderer)
   }
+
   getRawPreviewMesh() {
     return this._atlas.getRawPreviewMesh()
   }
@@ -372,6 +377,11 @@ class LayoutEngine {
       throw new Error(`LayoutEngine: Exceeded line length: ${this._lineIdx}`)
     }
 
+    if (!line.glyphs.length) {
+      // Skip empty lines
+      this._nextLine()
+    }
+
     const { ascender, unitsPerEm } = this.font
     const { fontSize, maxWidth, align } = this.options
     const fontScale = (1 / unitsPerEm) * fontSize
@@ -407,6 +417,58 @@ class LayoutEngine {
 const LINE_BREAK_REGEXP = /\r?\n/
 const splitLines = (text: string): string[] => {
   return text.trim().split(LINE_BREAK_REGEXP)
+}
+
+const transformPath = (
+  path: Path,
+  font: Font,
+  xOffset: number = 0,
+  yOffset: number = 0,
+  fontSize: number = 72
+): Path => {
+  const { commands } = path
+  const scale = (1 / (font.unitsPerEm || 1000)) * fontSize
+  const xScale = scale
+  const yScale = scale
+  const p = new Path()
+
+  for (const cmd of commands) {
+    switch (cmd.type) {
+      case 'M':
+        p.moveTo(xOffset + cmd.x * xScale, yOffset + -cmd.y * yScale)
+        break
+
+      case 'L':
+        p.lineTo(xOffset + cmd.x * xScale, yOffset + -cmd.y * yScale)
+        break
+
+      case 'Q':
+        p.quadraticCurveTo(
+          xOffset + cmd.cpx * xScale,
+          yOffset + -cmd.cpy * yScale,
+          xOffset + cmd.x * xScale,
+          yOffset + -cmd.y * yScale
+        )
+        break
+
+      case 'C':
+        p.bezierCurveTo(
+          xOffset + cmd.cp1x * xScale,
+          yOffset + -cmd.cp1y * yScale,
+          xOffset + cmd.cp2x * xScale,
+          yOffset + -cmd.cp2y * yScale,
+          xOffset + cmd.x * xScale,
+          yOffset + -cmd.y * yScale
+        )
+        break
+
+      case 'Z':
+        p.close()
+        break
+    }
+  }
+
+  return p
 }
 
 export default TextRenderer
