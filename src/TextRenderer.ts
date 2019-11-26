@@ -347,6 +347,10 @@ class LayoutEngine {
     this._nextLine()
   }
 
+  get hasNextLine() {
+    return this._lineIdx < this.lines.length - 1
+  }
+
   next() {
     const line = this.lines[this._lineIdx]
     const glyph = line.glyphs[this._glyphIdx++]
@@ -364,10 +368,7 @@ class LayoutEngine {
       this._xAdvance += letterSpacing * unitsPerEm * fontScale
     }
 
-    if (
-      this._glyphIdx === line.glyphs.length &&
-      this._lineIdx < this.lines.length - 1
-    ) {
+    if (this._glyphIdx === line.glyphs.length && this.hasNextLine) {
       this._nextLine()
     }
 
@@ -379,11 +380,6 @@ class LayoutEngine {
 
     if (!line) {
       throw new Error(`LayoutEngine: Exceeded line length: ${this._lineIdx}`)
-    }
-
-    if (!line.glyphs.length) {
-      // Skip empty lines
-      this._nextLine()
     }
 
     const { ascender, unitsPerEm } = this.font
@@ -414,13 +410,18 @@ class LayoutEngine {
 
     this._xAdvance = xAlignOffset
     this._yAdvance += lineHeight
+
+    if (!line.glyphs.length && this.hasNextLine) {
+      // Skip empty lines
+      this._nextLine()
+    }
   }
 }
 
 // Split text on line breaks
 const LINE_BREAK_REGEXP = /\r?\n/
 const splitLines = (text: string): string[] => {
-  return text.trim().split(LINE_BREAK_REGEXP)
+  return text.split(LINE_BREAK_REGEXP)
 }
 
 export default TextRenderer
