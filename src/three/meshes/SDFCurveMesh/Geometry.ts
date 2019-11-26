@@ -22,7 +22,7 @@ export default class SDFCurveGeometry extends BufferGeometry {
       ratioSignArr[i6 + 4] = ratio
       ratioSignArr[i6 + 5] = 1
     }
-    this.addAttribute('ratioSign', new Float32BufferAttribute(ratioSignArr, 2))
+    this.setAttribute('ratioSign', new Float32BufferAttribute(ratioSignArr, 2))
     const indexArr = new Uint16Array(segments * 12)
     for (let i = 0; i < segments; i++) {
       const i3 = i * 3

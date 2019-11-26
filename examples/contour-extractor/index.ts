@@ -123,11 +123,11 @@ async function main() {
 
     lines.forEach(line => {
       line.glyphs.forEach(glyph => {
-        glyph.path!.draw(context)
+        glyph.transformedPath!.draw(context)
       })
 
-      const boundingBoxes = line.glyphs.map(({ path }) =>
-        path!.getBoundingBox()
+      const boundingBoxes = line.glyphs.map(({ transformedPath }) =>
+        transformedPath!.getBoundingBox()
       )
 
       boundingBoxes.forEach(bb => {

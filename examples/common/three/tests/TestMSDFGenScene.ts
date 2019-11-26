@@ -4,42 +4,52 @@ import {
   Object3D,
   ShapePath,
   Vector2,
-  Vector3,
+  Vector3
 } from 'three'
-import { parseSVGPath, makeSvgShapeMeshes } from '../../../../src/three/utils/svgHelpers'
-import { makeTtfRawShapeMeshes, makeTtfFontShapeMeshes } from '../../../../src/three/utils/ttfHelpers'
+
+import TextRenderer, { Path, TextDirection } from '../../../../src'
 import SDFCurveMesh from '../../../../src/three/meshes/SDFCurveMesh'
-import renderer from '../renderer'
+import { ISDFKit } from '../../../../src/three/msdf/ISDFKit'
+import MSDFKit from '../../../../src/three/msdf/MSDFKit'
+import SDFKit from '../../../../src/three/msdf/SDFKit'
+import SDFAtlas from '../../../../src/three/SDFAtlas'
 import { getSharedPlaneBufferGeometry } from '../../../../src/three/utils/geometry'
-import RobotoBold from '../../../fonts/Roboto-Bold.ttf'
+import {
+  makeSvgShapeMeshes,
+  parseSVGPath
+} from '../../../../src/three/utils/svgHelpers'
+import {
+  makeTtfFontShapeMeshes,
+  makeTtfRawShapeMeshes
+} from '../../../../src/three/utils/ttfHelpers'
+import { lerp, rand } from '../../../../src/utils/math'
 import AmiriBold from '../../../fonts/Amiri-Bold.ttf'
+import RobotoBold from '../../../fonts/Roboto-Bold.ttf'
 import {
   testFontPathData1,
   testFontPathData2,
   testFontPathData3,
   TtfPathSegment
 } from '../../testFontPathData'
-import {
-  testTtfPathData
-} from '../../testTtfPathData'
 import { testSvgPathData1, testSvgPathData2 } from '../../testSvgPathData'
-import { lerp, rand } from '../../../../src/utils/math'
-
-import MSDFKit from '../../../../src/three/msdf/MSDFKit'
-import BaseTestScene from './BaseTestScene'
-import TextRenderer, { TextDirection, Path } from '../../../../src'
-import SDFAtlas from '../../../../src/three/SDFAtlas'
-import SDFKit from '../../../../src/three/msdf/SDFKit'
+import { testTtfPathData } from '../../testTtfPathData'
 import { getUrlParam } from '../../utils/location'
-import { ISDFKit } from '../../../../src/three/msdf/ISDFKit'
+import renderer from '../renderer'
+
+import BaseTestScene from './BaseTestScene'
 
 let sdfMode: 'sdf' | 'msdf' = 'msdf'
-if(getUrlParam('sdfMode') === 'msdf') {
+if (getUrlParam('sdfMode') === 'msdf') {
   sdfMode = 'msdf'
 }
 
-function makeISDFKit(mode:'sdf' | 'msdf', width:number, height:number, pixelDensity:number):ISDFKit {
-  if(mode === 'sdf') {
+function makeISDFKit(
+  mode: 'sdf' | 'msdf',
+  width: number,
+  height: number,
+  pixelDensity: number
+): ISDFKit {
+  if (mode === 'sdf') {
     return new SDFKit(width, height, pixelDensity, true)
   } else {
     return new MSDFKit(width, height, pixelDensity)
@@ -98,8 +108,18 @@ export default class TestMSDFGenScene extends BaseTestScene {
       }
     }
 
-    function makeSvgShape(shape: ShapePath, padding:number, scale: number, offset: Vector2) {
-      for(const curveMesh of makeSvgShapeMeshes(shape, padding, scale, offset)) {
+    function makeSvgShape(
+      shape: ShapePath,
+      padding: number,
+      scale: number,
+      offset: Vector2
+    ) {
+      for (const curveMesh of makeSvgShapeMeshes(
+        shape,
+        padding,
+        scale,
+        offset
+      )) {
         pivot.add(curveMesh)
         sdfKit.add(curveMesh)
         curves.push(curveMesh)
@@ -107,12 +127,19 @@ export default class TestMSDFGenScene extends BaseTestScene {
     }
     function makeTtfShapeRaw(
       ttfPath: TtfPathSegment[],
-      padding:number,
+      padding: number,
       windingOrder: 1 | -1,
       scale: number,
-      offset: Vector2,
+      offset: Vector2
     ) {
-      for(const curveMesh of makeTtfRawShapeMeshes(ttfPath, padding, windingOrder, 1, scale, offset)){
+      for (const curveMesh of makeTtfRawShapeMeshes(
+        ttfPath,
+        padding,
+        windingOrder,
+        1,
+        scale,
+        offset
+      )) {
         pivot.add(curveMesh)
         sdfKit.add(curveMesh)
         curves.push(curveMesh)
@@ -120,16 +147,24 @@ export default class TestMSDFGenScene extends BaseTestScene {
     }
     function makeTtfShape(
       ttfPath: TtfPathSegment[],
-      pointsPerEm:number,
-      fontSize:number,
-      padding:number,
+      pointsPerEm: number,
+      fontSize: number,
+      padding: number,
       pixelDensity: number,
       windingOrder: 1 | -1,
       yDir: 1 | -1
     ) {
-      const result = makeTtfFontShapeMeshes(ttfPath, pointsPerEm, fontSize, padding, pixelDensity, windingOrder, yDir)
+      const result = makeTtfFontShapeMeshes(
+        ttfPath,
+        pointsPerEm,
+        fontSize,
+        padding,
+        pixelDensity,
+        windingOrder,
+        yDir
+      )
       sdfKit.resize(result.size, result.pixelDensity)
-      for(const curveMesh of result.meshes){
+      for (const curveMesh of result.meshes) {
         pivot.add(curveMesh)
         sdfKit.add(curveMesh)
         curves.push(curveMesh)
@@ -173,19 +208,11 @@ export default class TestMSDFGenScene extends BaseTestScene {
         )
       },
       () => {
-        makeTtfShape(
-          testTtfPathData,
-          1,
-          1,
-          6,
-          1,
-          1,
-          1
-        )
+        makeTtfShape(testTtfPathData, 1, 1, 6, 1, 1, 1)
       },
       async () => {
         const atlas = new SDFAtlas(1024, 2, sdfKit)
-        const textRenderer = new TextRenderer({atlas})
+        const textRenderer = new TextRenderer({ atlas })
 
         textRenderer.addFont('Roboto-Bold', RobotoBold)
         textRenderer.addFont('Amiri-Bold', AmiriBold)
@@ -194,29 +221,17 @@ export default class TestMSDFGenScene extends BaseTestScene {
         const padding = 2
         const pixelDensity = 2
         const result = await textRenderer.getShapedGlyphs('ج', {
-          fontFace:'Amiri-Bold',
+          fontFace: 'Amiri-Bold',
           fontSize,
           lang: 'en',
           direction: TextDirection.LTR,
           yDir: 1
         })
-        const path = result[0].glyphs[0].glyph.path
-        if(path instanceof Path) {
+        const path = result[0].glyphs[0].transformedPath
+        if (path instanceof Path) {
           makeTtfShape(
             path.commands as TtfPathSegment[],
             path.unitsPerEm,
-            fontSize,
-            padding,
-            pixelDensity,
-            1,
-            -1
-          )
-        } else {
-          //Not sure when this would get executed
-          const p = path()
-          makeTtfShape(
-            p.commands as TtfPathSegment[],
-            p.unitsPerEm,
             fontSize,
             padding,
             pixelDensity,
@@ -227,10 +242,10 @@ export default class TestMSDFGenScene extends BaseTestScene {
       }
     ]
 
-    try{
+    try {
       tests[testId]()
-    } catch(e) {
-      console.error("Invalid test requested. Using test 4 instead.")
+    } catch (e) {
+      console.error('Invalid test requested. Using test 4 instead.')
       tests[4]()
     }
 

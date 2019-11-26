@@ -119,15 +119,16 @@ export default class SDFAtlas {
     padding: number,
     yDir: 1 | -1
   ) {
-    const { shaping, path } = shapedGlyph
+    const { shaping, transformedPath } = shapedGlyph
     const id = `${fontId}:${shaping.fontIndex}:${shaping.glyphId}:${fontSize}:${padding}`
+
     if (this._completedData.has(id)) {
       return this._completedData.get(id)!.uvs
     }
     if (this._queueData.has(id)) {
       return this._queueData.get(id)!.uvs
     }
-    const bb = path!.getBoundingBox()
+    const bb = transformedPath!.getBoundingBox()
     this._queue.push(id)
     const size = new Vector2(Math.ceil(bb.x2 - bb.x1), Math.ceil(bb.y2 - bb.y1))
     const packInfo = this._atlas.findSpace(size, false)
@@ -141,7 +142,7 @@ export default class SDFAtlas {
     const uvs = [min.x, min.y, min.x, max.y, max.x, max.y, max.x, min.y]
     //unlike the msdf generator example, the commands in these glyphs are already prescaled
     const prescale = 1
-    // const path2 = shapedGlyph.glyph.path
+    // const path2 = shapedGlyph.path
     // const prescale = fontSize / (path2 instanceof Path ? path2.unitsPerEm : path2().unitsPerEm)
     this._queueData.set(
       id,
@@ -152,7 +153,7 @@ export default class SDFAtlas {
         prescale,
         yDir,
         size,
-        path!.commands as TtfPathSegment[],
+        transformedPath!.commands as TtfPathSegment[],
         packInfo,
         uvs
       )

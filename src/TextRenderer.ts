@@ -1,7 +1,7 @@
 import { BufferAttribute, BufferGeometry, WebGLRenderer } from 'three'
 
 import FontLoader from './FontLoader'
-import { Font, getTextShaping, Shaping } from './lib/raqm'
+import { Font, getTextShaping, Glyph, Shaping } from './lib/raqm'
 import Path from './Path'
 import { TextAlign, TextOptions } from './TextOptions'
 import { ISDFKit } from './three/msdf/ISDFKit'
@@ -9,9 +9,22 @@ import MSDFKit from './three/msdf/MSDFKit'
 import SDFKit from './three/msdf/SDFKit'
 import SDFAtlas from './three/SDFAtlas'
 
-export interface ShapedGlyph {
+export class ShapedGlyph extends Glyph {
   shaping: Shaping
-  path: Path | undefined
+  transformedPath: Path | undefined
+
+  constructor(glyph: Glyph, shaping: Shaping) {
+    if (!glyph) {
+      throw new Error('No glyph supplied.')
+    }
+
+    if (!shaping) {
+      throw new Error('No shaping data supplied.')
+    }
+
+    super(glyph.id, glyph.symbol, glyph.path)
+    this.shaping = shaping
+  }
 }
 
 export interface Line {
@@ -98,11 +111,9 @@ class TextRenderer {
       )
 
       return {
-        glyphs: textShaping.map(x => ({
-          //glyph: font.glyphs.get(x.glyphId),
-          shaping: x,
-          path: undefined
-        })),
+        glyphs: textShaping.map(
+          x => new ShapedGlyph(font.glyphs.get(x.glyphId)!, x)
+        ),
         width: 0,
         height: 0
       }
@@ -125,11 +136,10 @@ class TextRenderer {
     lines.forEach(line => {
       const fontSize = options.fontSize
 
-      line.glyphs.forEach(shapedGlyph => {
+      line.glyphs.forEach(glyph => {
         const [x, y] = layout ? layoutEngine.next() : [0, 0]
-        const glyph = font.glyphs.get(shapedGlyph.shaping.glyphId)
 
-        shapedGlyph.path = glyph ? glyph.getPath(x, y, fontSize) : new Path()
+        glyph.transformedPath = glyph.getPath(x, y, fontSize)
       })
     })
 
@@ -154,8 +164,8 @@ class TextRenderer {
 
       line.glyphs.forEach((shapedGlyph, idx) => {
         const faceIdx = currIdx + idx * 4
-        const { path } = shapedGlyph
-        const bb = path!.getBoundingBox()
+        const { transformedPath } = shapedGlyph
+        const bb = transformedPath!.getBoundingBox()
         const [xOffset, yOffset] = layoutEngine.next()
         const padding = 6
         const glyphUvs = this._atlas.addTtfGlyph(
@@ -192,11 +202,11 @@ class TextRenderer {
       currIdx += line.glyphs.length * 4
     })
 
-    geometry.addAttribute(
+    geometry.setAttribute(
       'position',
       new BufferAttribute(new Float32Array(vertices), 3)
     )
-    geometry.addAttribute('uv', new BufferAttribute(new Float32Array(uvs), 2))
+    geometry.setAttribute('uv', new BufferAttribute(new Float32Array(uvs), 2))
     geometry.setIndex(new BufferAttribute(new Uint16Array(indices), 1))
     geometry.computeBoundingBox()
 

@@ -1,29 +1,28 @@
-import TextRenderer from '../../src/index'
-import RobotoBold from '../fonts/Roboto-Bold.ttf'
-import BarlowBold from '../fonts/Barlow-Bold.ttf'
-import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
-import AmiriBold from '../fonts/Amiri-Bold.ttf'
-import FiraCodeBold from '../fonts/FiraCode-Bold.ttf'
-
-
 import {
-  Scene,
-  OrthographicCamera,
-  Mesh,
-  WebGLRenderer,
-  MeshBasicMaterial,
   DoubleSide,
-  Vector3,
-  PlaneBufferGeometry,
   EdgesGeometry,
+  LineBasicMaterial,
   LineSegments,
-  LineBasicMaterial
+  Mesh,
+  MeshBasicMaterial,
+  OrthographicCamera,
+  PlaneBufferGeometry,
+  Scene,
+  Vector3,
+  WebGLRenderer
 } from 'three'
-import TextEditor from '../common/TextEditor'
-import Ruler, { RulerDirection } from '../common/Ruler'
+
+import TextRenderer from '../../src/index'
 import TestMSDFMaterial from '../../src/three/materials/TestMSDFMaterial'
-import { getUrlParam } from '../common/utils/location'
+import Ruler, { RulerDirection } from '../common/Ruler'
+import TextEditor from '../common/TextEditor'
 import Toggle from '../common/Toggle'
+import { getUrlParam } from '../common/utils/location'
+import AmiriBold from '../fonts/Amiri-Bold.ttf'
+import BarlowBold from '../fonts/Barlow-Bold.ttf'
+import FiraCodeBold from '../fonts/FiraCode-Bold.ttf'
+import RobotoBold from '../fonts/Roboto-Bold.ttf'
+import ScheherazadeBold from '../fonts/Scheherazade-Bold.ttf'
 
 const canvas = document.querySelector('canvas#viewport')! as HTMLCanvasElement
 const rulerHorizontal = new Ruler(
@@ -36,7 +35,7 @@ const rulerVertical = new Ruler(
 )
 
 const toggles = {
-  animate: new Toggle('input#animate'),
+  animate: new Toggle('input#animate', false),
   boundingBox: new Toggle('input#bounding-box'),
   atlasPreview: new Toggle('input#atlas-preview', false)
 }
@@ -56,7 +55,6 @@ async function main() {
   textRenderer.addFont('Scheherazade-Bold', ScheherazadeBold)
   textRenderer.addFont('Amiri-Bold', AmiriBold)
   textRenderer.addFont('FiraCode-Bold', FiraCodeBold)
-  
 
   const textEditor = new TextEditor(textRenderer)
   textEditor.onUpdate(update)
@@ -80,12 +78,10 @@ async function main() {
   const camera = new OrthographicCamera(1, 1, 1, 1)
   camera.position.z = 5
   scene.add(camera)
-  //if (showAtlasPreview) {
   const preview = textRenderer.getRawPreviewMesh()
   preview.scale.multiplyScalar(200)
   preview.position.set(100, 100, 400)
   scene.add(preview)
-  //}
 
   function handleResize() {
     const { innerWidth, innerHeight } = window
