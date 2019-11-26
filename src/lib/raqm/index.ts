@@ -2,7 +2,6 @@ import Path from '../../Path'
 
 import raqm from './raqm.wasm'
 import Types, { defineStruct } from './Types'
-import { RawShaderMaterial } from 'three'
 
 export interface Shaping {
   symbol: string
@@ -160,11 +159,67 @@ export class Glyph {
   id: number
   symbol: string
   path: Path
+  unitsPerEm: number
 
-  constructor(id: number, symbol: string, path: Path) {
+  constructor(id: number, symbol: string, path: Path, font: Font) {
     this.id = id
     this.symbol = symbol
     this.path = path
+    this.unitsPerEm = font.unitsPerEm
+  }
+
+  getPath(
+    xOffset: number = 0,
+    yOffset: number = 0,
+    fontSize: number = 72
+  ): Path {
+    const { commands } = this.path
+    const scale = (1 / (this.unitsPerEm || 1000)) * fontSize
+    const xScale = scale
+    const yScale = scale
+    const p = new Path()
+
+    for (const cmd of commands) {
+      switch (cmd.type) {
+        case 'M':
+          p.moveTo(xOffset + cmd.x * xScale, yOffset + -cmd.y * yScale)
+          break
+
+        case 'L':
+          p.lineTo(xOffset + cmd.x * xScale, yOffset + -cmd.y * yScale)
+          break
+
+        case 'Q':
+          p.quadraticCurveTo(
+            xOffset + cmd.cpx * xScale,
+            yOffset + -cmd.cpy * yScale,
+            xOffset + cmd.x * xScale,
+            yOffset + -cmd.y * yScale
+          )
+          break
+
+        case 'C':
+          p.bezierCurveTo(
+            xOffset + cmd.cp1x * xScale,
+            yOffset + -cmd.cp1y * yScale,
+            xOffset + cmd.cp2x * xScale,
+            yOffset + -cmd.cp2y * yScale,
+            xOffset + cmd.x * xScale,
+            yOffset + -cmd.y * yScale
+          )
+          break
+
+        case 'Z':
+          p.close()
+          break
+      }
+    }
+
+    return p
+  }
+
+  getBoundingBox() {
+    return this.path.getBoundingBox()
   }
 }
 
@@ -231,7 +286,10 @@ export const getGlyphPath = (font: Font, glyphId: number, symbol: string) => {
     }
 
     raqm.hb_ot_glyph_path_destroy(glyphPathPointer)
-    font.glyphs.set(glyphId, new Glyph(glyphId, symbol, path))
+
+    const glyph = new Glyph(glyphId, symbol, path, font)
+
+    font.glyphs.set(glyphId, glyph)
 
     return path
   } else {

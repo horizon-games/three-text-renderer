@@ -127,15 +127,9 @@ class TextRenderer {
 
       line.glyphs.forEach(shapedGlyph => {
         const [x, y] = layout ? layoutEngine.next() : [0, 0]
+        const glyph = font.glyphs.get(shapedGlyph.shaping.glyphId)
 
-        //shapedGlyph.path = shapedGlyph.glyph.getPath(x, y, fontSize, {}, font)
-        shapedGlyph.path = transformPath(
-          font.glyphs.get(shapedGlyph.shaping.glyphId)!.path!,
-          font,
-          x,
-          y,
-          fontSize
-        )
+        shapedGlyph.path = glyph ? glyph.getPath(x, y, fontSize) : new Path()
       })
     })
 
@@ -417,58 +411,6 @@ class LayoutEngine {
 const LINE_BREAK_REGEXP = /\r?\n/
 const splitLines = (text: string): string[] => {
   return text.trim().split(LINE_BREAK_REGEXP)
-}
-
-const transformPath = (
-  path: Path,
-  font: Font,
-  xOffset: number = 0,
-  yOffset: number = 0,
-  fontSize: number = 72
-): Path => {
-  const { commands } = path
-  const scale = (1 / (font.unitsPerEm || 1000)) * fontSize
-  const xScale = scale
-  const yScale = scale
-  const p = new Path()
-
-  for (const cmd of commands) {
-    switch (cmd.type) {
-      case 'M':
-        p.moveTo(xOffset + cmd.x * xScale, yOffset + -cmd.y * yScale)
-        break
-
-      case 'L':
-        p.lineTo(xOffset + cmd.x * xScale, yOffset + -cmd.y * yScale)
-        break
-
-      case 'Q':
-        p.quadraticCurveTo(
-          xOffset + cmd.cpx * xScale,
-          yOffset + -cmd.cpy * yScale,
-          xOffset + cmd.x * xScale,
-          yOffset + -cmd.y * yScale
-        )
-        break
-
-      case 'C':
-        p.bezierCurveTo(
-          xOffset + cmd.cp1x * xScale,
-          yOffset + -cmd.cp1y * yScale,
-          xOffset + cmd.cp2x * xScale,
-          yOffset + -cmd.cp2y * yScale,
-          xOffset + cmd.x * xScale,
-          yOffset + -cmd.y * yScale
-        )
-        break
-
-      case 'Z':
-        p.close()
-        break
-    }
-  }
-
-  return p
 }
 
 export default TextRenderer
