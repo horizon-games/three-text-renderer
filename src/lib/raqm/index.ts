@@ -159,13 +159,11 @@ export class Glyph {
   id: number
   symbol: string
   path: Path
-  unitsPerEm: number
 
-  constructor(id: number, symbol: string, path: Path, font: Font) {
+  constructor(id: number, symbol: string, path: Path) {
     this.id = id
     this.symbol = symbol
     this.path = path
-    this.unitsPerEm = font.unitsPerEm
   }
 
   getPath(
@@ -174,7 +172,7 @@ export class Glyph {
     fontSize: number = 72
   ): Path {
     const { commands } = this.path
-    const scale = (1 / (this.unitsPerEm || 1000)) * fontSize
+    const scale = (1 / this.path.unitsPerEm) * fontSize
     const xScale = scale
     const yScale = scale
     const p = new Path()
@@ -234,17 +232,18 @@ export const getGlyphPath = (font: Font, glyphId: number, symbol: string) => {
       glyphPathPointer,
       tempPointer
     )
-    //const coordsLen = heapu32[tempPointer / 4]
+    //const coordsCount = heapu32[tempPointer / 4]
     const commands = raqm.hb_ot_glyph_path_get_commands(
       glyphPathPointer,
       tempPointer
     )
-    const commandsLen = heapu32[tempPointer / 4]
+    const commandsCount = heapu32[tempPointer / 4]
     raqm.free(tempPointer)
 
     const path = new Path()
+    path.unitsPerEm = font.unitsPerEm
 
-    for (let i = 0, j = coords / 4; i < commandsLen; i++) {
+    for (let i = 0, j = coords / 4; i < commandsCount; i++) {
       const cmd = String.fromCharCode(heapu8[commands + i])
 
       switch (cmd) {
@@ -287,7 +286,7 @@ export const getGlyphPath = (font: Font, glyphId: number, symbol: string) => {
 
     raqm.hb_ot_glyph_path_destroy(glyphPathPointer)
 
-    const glyph = new Glyph(glyphId, symbol, path, font)
+    const glyph = new Glyph(glyphId, symbol, path)
 
     font.glyphs.set(glyphId, glyph)
 
@@ -333,7 +332,7 @@ export const getTextShaping = (
   )
   //raqm.raqm_set_harfbuzz_font_range(rq, font2, 1, 5)
   //raqm.raqm_set_harfbuzz_font_range(rq, font3, 6, 1)
-  //raqm.hb_font_destroy(font.fontPointer) // rq will hold a reference to font
+  raqm.hb_font_destroy(font.fontPointer) // rq will hold a reference to font
   //raqm.hb_font_destroy(font2) // rq will hold a reference to font2
   //raqm.hb_font_destroy(font3) // rq will hold a reference to font3
   raqm.raqm_set_par_direction(rq, direction)

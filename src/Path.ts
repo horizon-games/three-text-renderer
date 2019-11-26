@@ -43,6 +43,7 @@ type Command =
 
 export default class Path {
   commands: Command[] = []
+  unitsPerEm: number = 1000
 
   moveTo(x: number, y: number) {
     this.commands.push({ type: 'M', x, y })
