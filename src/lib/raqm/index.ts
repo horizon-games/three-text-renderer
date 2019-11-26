@@ -189,8 +189,8 @@ export class Glyph {
 
         case 'Q':
           p.quadraticCurveTo(
-            xOffset + cmd.cpx * xScale,
-            yOffset + -cmd.cpy * yScale,
+            xOffset + cmd.cp1x * xScale,
+            yOffset + -cmd.cp1y * yScale,
             xOffset + cmd.x * xScale,
             yOffset + -cmd.y * yScale
           )

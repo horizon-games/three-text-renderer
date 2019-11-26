@@ -8,6 +8,7 @@ import {
 } from 'three'
 
 import TextRenderer, { Path, TextDirection } from '../../../../src'
+import { PathSegment } from '../../../../src/Path'
 import SDFCurveMesh from '../../../../src/three/meshes/SDFCurveMesh'
 import { ISDFKit } from '../../../../src/three/msdf/ISDFKit'
 import MSDFKit from '../../../../src/three/msdf/MSDFKit'
@@ -28,8 +29,7 @@ import RobotoBold from '../../../fonts/Roboto-Bold.ttf'
 import {
   testFontPathData1,
   testFontPathData2,
-  testFontPathData3,
-  TtfPathSegment
+  testFontPathData3
 } from '../../testFontPathData'
 import { testSvgPathData1, testSvgPathData2 } from '../../testSvgPathData'
 import { testTtfPathData } from '../../testTtfPathData'
@@ -126,7 +126,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
       }
     }
     function makeTtfShapeRaw(
-      ttfPath: TtfPathSegment[],
+      ttfPath: PathSegment[],
       padding: number,
       windingOrder: 1 | -1,
       scale: number,
@@ -146,7 +146,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
       }
     }
     function makeTtfShape(
-      ttfPath: TtfPathSegment[],
+      ttfPath: PathSegment[],
       pointsPerEm: number,
       fontSize: number,
       padding: number,
@@ -230,7 +230,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
         const path = result[0].glyphs[0].transformedPath
         if (path instanceof Path) {
           makeTtfShape(
-            path.commands as TtfPathSegment[],
+            path.commands,
             path.unitsPerEm,
             fontSize,
             padding,

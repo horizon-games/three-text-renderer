@@ -1,7 +1,7 @@
 import { Color, Mesh, MeshBasicMaterial, Vector2, WebGLRenderer } from 'three'
 
-import { TtfPathSegment } from '../../examples/common/testFontPathData'
 import { PackedBin } from '../BinPacker'
+import { PathSegment } from '../Path'
 import { ShapedGlyph } from '../TextRenderer'
 
 import BlitKit from './msdf/BlitKit'
@@ -20,7 +20,7 @@ class QueuedGlyph {
     public prescale: number,
     public yDir: 1 | -1,
     public size: Vector2,
-    public ttfPath: TtfPathSegment[],
+    public ttfPath: PathSegment[],
     public packInfo: PackedBin,
     public uvs: number[]
   ) {
@@ -153,7 +153,7 @@ export default class SDFAtlas {
         prescale,
         yDir,
         size,
-        transformedPath!.commands as TtfPathSegment[],
+        transformedPath!.commands,
         packInfo,
         uvs
       )

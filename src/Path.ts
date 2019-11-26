@@ -18,8 +18,8 @@ interface CloseCommand {
 
 interface QuadraticCurveCommand {
   type: 'Q'
-  cpx: number
-  cpy: number
+  cp1x: number
+  cp1y: number
   x: number
   y: number
 }
@@ -34,7 +34,7 @@ interface BezierCurveCommand {
   y: number
 }
 
-type Command =
+export type PathSegment =
   | MoveCommand
   | LineCommand
   | QuadraticCurveCommand
@@ -42,7 +42,7 @@ type Command =
   | CloseCommand
 
 export default class Path {
-  commands: Command[] = []
+  commands: PathSegment[] = []
   unitsPerEm: number = 1000
 
   moveTo(x: number, y: number) {
@@ -53,8 +53,8 @@ export default class Path {
     this.commands.push({ type: 'L', x, y })
   }
 
-  quadraticCurveTo(cpx: number, cpy: number, x: number, y: number) {
-    this.commands.push({ type: 'Q', cpx, cpy, x, y })
+  quadraticCurveTo(cp1x: number, cp1y: number, x: number, y: number) {
+    this.commands.push({ type: 'Q', cp1x, cp1y, x, y })
   }
 
   bezierCurveTo(
@@ -86,7 +86,7 @@ export default class Path {
           break
 
         case 'Q':
-          ctx.quadraticCurveTo(cmd.cpx, cmd.cpy, cmd.x, cmd.y)
+          ctx.quadraticCurveTo(cmd.cp1x, cmd.cp1y, cmd.x, cmd.y)
           break
 
         case 'C':
@@ -132,7 +132,7 @@ export default class Path {
           break
 
         case 'Q':
-          box.addQuad(prevX, prevY, cmd.cpx, cmd.cpy, cmd.x, cmd.y)
+          box.addQuad(prevX, prevY, cmd.cp1x, cmd.cp1y, cmd.x, cmd.y)
           prevX = cmd.x
           prevY = cmd.y
           break
