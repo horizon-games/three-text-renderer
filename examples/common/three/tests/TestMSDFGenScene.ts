@@ -227,7 +227,7 @@ export default class TestMSDFGenScene extends BaseTestScene {
           direction: TextDirection.LTR,
           yDir: 1
         })
-        const path = result[0].glyphs[0].transformedPath
+        const path = result[0].glyphs[0].path
         if (path instanceof Path) {
           makeTtfShape(
             path.commands,
