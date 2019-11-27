@@ -44,6 +44,7 @@ export type PathSegment =
 export default class Path {
   commands: PathSegment[] = []
   unitsPerEm: number = 1000
+  boundingBox: BoundingBox | undefined
 
   moveTo(x: number, y: number) {
     this.commands.push({ type: 'M', x, y })
@@ -70,6 +71,7 @@ export default class Path {
 
   close() {
     this.commands.push({ type: 'Z' })
+    this.updateBoundingBox()
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -109,8 +111,20 @@ export default class Path {
     ctx.fill()
   }
 
-  getBoundingBox() {
-    const box = new BoundingBox()
+  getBoundingBox(): BoundingBox {
+    if (!this.boundingBox) {
+      this.updateBoundingBox()
+    }
+
+    return this.boundingBox!
+  }
+
+  updateBoundingBox() {
+    if (!this.boundingBox) {
+      this.boundingBox = new BoundingBox()
+    } else {
+      this.boundingBox.reset()
+    }
 
     let startX = 0
     let startY = 0
@@ -120,25 +134,32 @@ export default class Path {
     for (const cmd of this.commands) {
       switch (cmd.type) {
         case 'M':
-          box.addPoint(cmd.x, cmd.y)
+          this.boundingBox.addPoint(cmd.x, cmd.y)
           startX = prevX = cmd.x
           startY = prevY = cmd.y
           break
 
         case 'L':
-          box.addPoint(cmd.x, cmd.y)
+          this.boundingBox.addPoint(cmd.x, cmd.y)
           prevX = cmd.x
           prevY = cmd.y
           break
 
         case 'Q':
-          box.addQuad(prevX, prevY, cmd.cp1x, cmd.cp1y, cmd.x, cmd.y)
+          this.boundingBox.addQuad(
+            prevX,
+            prevY,
+            cmd.cp1x,
+            cmd.cp1y,
+            cmd.x,
+            cmd.y
+          )
           prevX = cmd.x
           prevY = cmd.y
           break
 
         case 'C':
-          box.addBezier(
+          this.boundingBox.addBezier(
             prevX,
             prevY,
             cmd.cp1x,
@@ -158,7 +179,5 @@ export default class Path {
           break
       }
     }
-
-    return box
   }
 }

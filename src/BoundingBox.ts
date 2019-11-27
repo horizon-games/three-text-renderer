@@ -1,17 +1,24 @@
-const derive = (v0: number, v1: number, v2: number, v3: number, t: number) => {
-  return (
-    Math.pow(1 - t, 3) * v0 +
-    3 * Math.pow(1 - t, 2) * t * v1 +
-    3 * (1 - t) * Math.pow(t, 2) * v2 +
-    Math.pow(t, 3) * v3
-  )
-}
+import { Box2, Vector2 } from 'three'
 
 export default class BoundingBox {
-  x1 = Infinity
-  y1 = Infinity
-  x2 = -Infinity
-  y2 = -Infinity
+  x1: number = Infinity
+  y1: number = Infinity
+  x2: number = -Infinity
+  y2: number = -Infinity
+
+  reset() {
+    this.x1 = Infinity
+    this.y1 = Infinity
+    this.x2 = -Infinity
+    this.y2 = -Infinity
+  }
+
+  getBox2() {
+    return new Box2(
+      new Vector2(this.x1, this.y1),
+      new Vector2(this.x2, this.y2)
+    )
+  }
 
   addX(x: number) {
     if (x < this.x1) {
@@ -118,4 +125,13 @@ export default class BoundingBox {
 
     this.addBezier(x0, y0, cp1x, cp1y, cp2x, cp2y, x, y)
   }
+}
+
+const derive = (v0: number, v1: number, v2: number, v3: number, t: number) => {
+  return (
+    Math.pow(1 - t, 3) * v0 +
+    3 * Math.pow(1 - t, 2) * t * v1 +
+    3 * (1 - t) * Math.pow(t, 2) * v2 +
+    Math.pow(t, 3) * v3
+  )
 }
