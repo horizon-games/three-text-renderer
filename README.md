@@ -1,3 +1,5 @@
+
+
 # three-text-renderer
 
 Three js realtime msdf text rendering pipeline that utilizes harfbuzz for text shaping.
@@ -49,6 +51,8 @@ You can start the dev environment with:
 `yarn dev`
 
 This will direct you to a page with examples of different phases of the pipe line to check out.
+
+![sample images](https://raw.githubusercontent.com/horizon-games/three-text-renderer/master/images/example.png)
 
 # API
 
