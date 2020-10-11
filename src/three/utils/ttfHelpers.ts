@@ -94,7 +94,8 @@ export function makeTtfRawShapeMeshes(
       case 'Z':
         break
       default:
-        debugger
+        console.warn('unsupported command ' + seg.type)
+      // debugger
     }
     if (curveMesh) {
       meshes.push(curveMesh)

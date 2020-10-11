@@ -35,7 +35,7 @@ export const decorateMethodBefore = (
   newMethod: () => void
 ) => {
   const oldMethod = obj[methodName] as () => void
-  obj[methodName] = (...args: any[]) => {
+  obj[methodName] = (...args: []) => {
     newMethod.apply(obj, args)
     const result = oldMethod.apply(obj, args)
     return result
@@ -51,7 +51,7 @@ export const decorateMethodAfter = (
   newMethod: () => void
 ) => {
   const oldMethod = obj[methodName] as () => void
-  obj[methodName] = (...args: any[]) => {
+  obj[methodName] = (...args: []) => {
     const result = oldMethod.apply(obj, args)
     newMethod.apply(obj, args)
     return result
@@ -94,6 +94,7 @@ export function lockProp(target: any, propName: string) {
     get() {
       return _value
     },
+    //@ts-ignore
     set(val) {
       //console.warn(propName + ' change prevented.')
     }

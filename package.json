@@ -4,13 +4,16 @@
   "description": "Three js realtime msdf text rendering pipeline that utilizes harfbuzz for text shaping.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+      "dist"
+  ],
   "repository": "git@github.com:horizon-games/three-text-renderer.git",
   "author": "Tomaz Dyzinski, Corban Riley",
   "license": "MIT",
   "private": false,
   "scripts": {
     "dev": "parcel examples/index.html",
-    "build": "tsc",
+    "build": "parcel build src/index.ts",
     "lint": "yarn run lint:tslint && yarn run lint:prettier",
     "lint:fix": "yarn run lint:fixtslint && yarn run lint:fixprettier",
     "lint:tslint": "tslint -c tslint.json $(find src -type f -name *.ts -o -name *.tsx)",

@@ -15,6 +15,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src/**/*", "examples/**/*", "typings"],
+  "include": ["src/index.ts", "examples/**/*", "typings"],
   "exclude": [".git", "node_modules"]
 }

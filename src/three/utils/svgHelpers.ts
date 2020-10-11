@@ -108,24 +108,24 @@ function getReflection(a: number, b: number) {
   return a - (b - a)
 }
 
-function parseFloats(string: string) {
-  const arrayStrings = string.split(/[\s,]+|(?=\s?[+\-])/)
+function parseFloats(str: string) {
+  const arrayStrings = str.split(/[\s,]+|(?=\s?[+\-])/)
   const arrayNumbers: number[] = []
   for (let i = 0; i < arrayStrings.length; i++) {
-    const number = arrayStrings[i]
+    const num = arrayStrings[i]
 
     // Handle values like 48.6037.7.8
     // TODO Find a regex for this
 
-    if (number.indexOf('.') !== number.lastIndexOf('.')) {
-      const split = number.split('.')
+    if (num.indexOf('.') !== num.lastIndexOf('.')) {
+      const split = num.split('.')
 
       for (let s = 2; s < split.length; s++) {
         arrayStrings.splice(i + s - 1, 0, '0.' + split[s])
       }
     }
 
-    arrayNumbers[i] = parseFloat(number)
+    arrayNumbers[i] = parseFloat(num)
   }
 
   return arrayNumbers
@@ -540,13 +540,15 @@ export function makeSvgShapeMeshes(
         )
         curveMesh.setAnchor2v(curve.v2)
       } else {
-        debugger
+        console.warn('unknown curve type')
+        // debugger
       }
       if (curveMesh) {
         curveMesh.transform(offset, scale)
         meshes.push(curveMesh)
       } else {
-        debugger
+        console.warn('no curve created')
+        // debugger
       }
     }
   }

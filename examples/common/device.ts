@@ -6,18 +6,18 @@ type DeviceOrientation = 'landscape' | 'portrait'
 type Listener = () => void
 
 class Device {
-  width: number
-  height: number
-  aspect: number
-  deviceWidth: number // landscape orientation
-  deviceHeight: number // landscape orientation
-  deviceAspect: number // landscape orientation
-  orientation: DeviceOrientation
-  pixelRatio: number
+  width: number = 10
+  height: number = 10
+  aspect: number = 1
+  deviceWidth: number = 100// landscape orientation
+  deviceHeight: number = 100// landscape orientation
+  deviceAspect: number = 100 // landscape orientation
+  orientation: DeviceOrientation = 'landscape'
+  pixelRatio: number = 2
   fps: number = 0
-  targetFPS: number
-  useTouch: boolean
-  type: DeviceType
+  targetFPS: number = 60
+  useTouch: boolean = false
+  type: DeviceType = 'desktop'
   listeners: Set<Listener> = new Set()
   private cachedPPCm: number = -1
 

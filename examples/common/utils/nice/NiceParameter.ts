@@ -21,7 +21,7 @@ export default class NiceParameter<T> extends NiceElement {
   get valueString() {
     return this._valueTextConverter(this._value)
   }
-
+  //@ts-ignore
   protected _value: T
   protected _listeners: Array<(value: T) => void> = []
   constructor(

@@ -38,6 +38,7 @@ class AnimatedProperty {
 
 class AnimatedObject {
   readonly duration: number
+  //@ts-ignore
   onComplete: () => void
   finished: Promise<void>
   constructor(

@@ -47,11 +47,11 @@ export default class BaseTestScene {
     this.bgColor = bgColor
   }
 
-  update(dt: number) {
+  update(_dt: number) {
     this.scene.updateMatrixWorld(false)
   }
 
-  render(renderer: WebGLRenderer, dt: number) {
+  render(renderer: WebGLRenderer, _dt: number) {
     renderer.setClearColor(this.bgColor, 1)
     renderer.clear(true, true)
     renderer.render(this.scene, this.camera)
